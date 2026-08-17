@@ -1,0 +1,38 @@
+package org.paymentgateway.user.service;
+
+import org.paymentgateway.user.repository.BaseRepository;
+
+import java.util.List;
+
+public abstract class AbstractBaseService<T, ID> implements BaseService<T, ID> {
+
+    protected final BaseRepository<T, ID> baseRepository;
+
+    protected AbstractBaseService(BaseRepository baseRepository) {
+        this.baseRepository = baseRepository;
+    }
+
+    @Override
+    public List<T> findAll() {
+        return baseRepository.findAll();
+    }
+
+    @Override
+    public T findById(ID id) {
+        return baseRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public T save(T entity) {
+        return baseRepository.save(entity);
+    }
+
+    @Override
+    public void delete(ID id) {
+        baseRepository.deleteById(id);
+    }
+
+    // update left abstract — subclasses can override with entity-specific logic
+    @Override
+    public abstract T update(ID id, T entity);
+}
