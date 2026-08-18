@@ -31,13 +31,6 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
 
-# OpenAPI / Swagger config
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-
 # Actuator endpoints
 management:
   endpoints:
@@ -59,9 +52,28 @@ resilience4j:
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
 
-jwt:
-  issuer: auth-service
-  access-token-validity-seconds: 900   # 15 minutes
-  refresh-token-validity-seconds: 1209600 # 14 days
+# Security & JWT Configuration
+app:
+  jwt:
+    # 256-bit+ secure base64-encoded secret key
+    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    # 15 minutes in milliseconds
+    access-token-expiration-ms: 900000
+    # 7 days in milliseconds
+    refresh-token-expiration-ms: 604800000
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    allowed-headers: "*"
+    exposed-headers: "Authorization"
+
+# Springdoc OpenAPI Swagger
+springdoc:
+  api-docs:
+    path: /v3/api-docs/auth
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
 
 

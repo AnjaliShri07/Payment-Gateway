@@ -23,9 +23,9 @@ public class UserServiceImpl extends AbstractBaseService<User, Long> {
             existing.setUsername(user.getUsername());
             existing.setEmail(user.getEmail());
             existing.setPassword(user.getPassword());
-            existing.setPhone(user.getPhone());
-            existing.setAddress(user.getAddress());
-            existing.setRole(user.getRole());
+           /* existing.setPhone(user.getPhone());
+            existing.setAddress(user.getAddress());*/
+            existing.setRoles(user.getRoles());
             return userRepository.save(existing);
         }
         return null;

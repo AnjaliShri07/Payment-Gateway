@@ -1,78 +1,67 @@
 package org.paymentgateway.auth.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import org.paymentgateway.auth.constant.UserRole;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
-import java.sql.Timestamp;
+import java.util.HashSet;
+import java.util.Set;
 
-/**
- * Represents a User entity in the payment gateway system.
- * <p>
- * This entity stores user details such as username, email, phone,
- * address, role, and audit timestamps. Passwords must always be stored
- * securely in hashed form.
- * </p>
- */
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "users", 
+       uniqueConstraints = {
+           @UniqueConstraint(columnNames = "username"),
+           @UniqueConstraint(columnNames = "email")
+       })
+public class User extends BaseEntity {
 
-    private static final long serialVersionUID = 1L;
-
-    /** Primary key identifier for the user. */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, updatable = false)
-    @JsonProperty("id")
     private Long id;
 
-    /** Unique username chosen by the user. */
-    @Column(name = "username", nullable = false)
-    @JsonProperty("username")
+    @NotBlank
+    @Size(min = 3, max = 50)
+    @Column(nullable = false, length = 50)
     private String username;
 
-    /** Unique email address of the user. */
-    @Column(name = "email", nullable = false, unique = true)
-    @JsonProperty("email")
+    @NotBlank
+    @Size(max = 100)
+    @Email
+    @Column(nullable = false, length = 100)
     private String email;
 
-    /** Securely stored password (hashed). */
-    @Column(name = "password", nullable = false)
-    @JsonProperty("password")
+    @NotBlank
+    @Size(max = 120)
+    @Column(nullable = false, length = 120)
     private String password;
 
-    /** Contact phone number of the user. */
-    @Column(name = "phone", nullable = true)
-    @JsonProperty("phone")
-    private String phone;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles",
+               joinColumns = @JoinColumn(name = "user_id"),
+               inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role> roles = new HashSet<>();
 
-    /** Residential or mailing address of the user. */
-    @Column(name = "address", nullable = true)
-    @JsonProperty("address")
-    private String address;
+    @Column(nullable = false)
+    private boolean enabled = true;
 
-    /** Role assigned to the user (CUSTOMER or ADMIN). */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    @JsonProperty("role")
-    private UserRole role;
+    @Column(nullable = false)
+    private boolean accountNonExpired = true;
 
-    /** Timestamp when the user record was created. */
-    @Column(name = "created_at", nullable = false, updatable = false)
-    @JsonProperty("created_at")
-    private Timestamp created_at;
+    @Column(nullable = false)
+    private boolean credentialsNonExpired = true;
 
-    /** Timestamp when the user record was last updated. */
-    @Column(name = "updated_at", nullable = false)
-    @JsonProperty("updated_at")
-    private Timestamp updated_at;
+    @Column(nullable = false)
+    private boolean accountNonLocked = true;
 
-    // Relationship with payments
-    //@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    //private List<Payment> payments;
+    public User() {
+    }
 
-    // getters and setters
+    public User(String username, String email, String password) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
 
     public Long getId() {
         return id;
@@ -80,14 +69,6 @@ public class User {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Timestamp getUpdated_at() {
-        return updated_at;
-    }
-
-    public void setUpdated_at(Timestamp updated_at) {
-        this.updated_at = updated_at;
     }
 
     public String getUsername() {
@@ -114,36 +95,43 @@ public class User {
         this.password = password;
     }
 
-    public String getPhone() {
-        return phone;
+    public Set<Role> getRoles() {
+        return roles;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setRoles(Set<Role> roles) {
+        this.roles = (roles != null) ? roles : new HashSet<>();
     }
 
-    public String getAddress() {
-        return address;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
-    public UserRole getRole() {
-        return role;
+    public boolean isAccountNonExpired() {
+        return accountNonExpired;
     }
 
-    public void setRole(UserRole role) {
-        this.role = role;
+    public void setAccountNonExpired(boolean accountNonExpired) {
+        this.accountNonExpired = accountNonExpired;
     }
 
-    public Timestamp getCreated_at() {
-        return created_at;
+    public boolean isCredentialsNonExpired() {
+        return credentialsNonExpired;
     }
 
-    public void setCreated_at(Timestamp created_at) {
-        this.created_at = created_at;
+    public void setCredentialsNonExpired(boolean credentialsNonExpired) {
+        this.credentialsNonExpired = credentialsNonExpired;
+    }
+
+    public boolean isAccountNonLocked() {
+        return accountNonLocked;
+    }
+
+    public void setAccountNonLocked(boolean accountNonLocked) {
+        this.accountNonLocked = accountNonLocked;
     }
 }
-

@@ -1,45 +1,31 @@
 package org.paymentgateway.auth.entity;
 
 import jakarta.persistence.*;
-import java.time.Instant;
-import java.util.UUID;
 
-/**
- * Refresh token entity. Stores token string, expiry, and link to user.
- *
- * OpenAI docs: https://platform.openai.com/docs
- * Java docs: https://docs.oracle.com/en/java/
- */
+import java.time.Instant;
+
 @Entity
 @Table(name = "refresh_tokens")
-public class RefreshToken {
+public class RefreshToken extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String token; // UUID string
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
+
+    @Column(nullable = false, unique = true, length = 128)
+    private String token;
 
     @Column(nullable = false)
     private Instant expiryDate;
 
     @Column(nullable = false)
-    private Instant createdAt = Instant.now();
+    private boolean revoked = false;
 
     public RefreshToken() {
-
-    }
-
-    public RefreshToken(Long id, String token, User user, Instant expiryDate, Instant createdAt) {
-        this.id = id;
-        this.token = token;
-        this.user = user;
-        this.expiryDate = expiryDate;
-        this.createdAt = createdAt;
     }
 
     public Long getId() {
@@ -50,20 +36,20 @@ public class RefreshToken {
         this.id = id;
     }
 
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
     public User getUser() {
         return user;
     }
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public Instant getExpiryDate() {
@@ -74,11 +60,11 @@ public class RefreshToken {
         this.expiryDate = expiryDate;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
+    public boolean isRevoked() {
+        return revoked;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setRevoked(boolean revoked) {
+        this.revoked = revoked;
     }
 }

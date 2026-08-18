@@ -30,6 +30,7 @@
 		<java.version>26</java.version>
 		<spring-ai.version>2.0.0</spring-ai.version>
 		<spring-cloud.version>2025.1.2</spring-cloud.version>
+		<springdoc.version>2.8.5</springdoc.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -55,10 +56,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-zipkin</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-starter-model-anthropic</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -91,7 +88,7 @@
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.5.0</version>
+			<version>${springdoc.version}</version>
 		</dependency>
 		<!--  Source: https://mvnrepository.com/artifact/io.github.resilience4j/resilience4j-spring-boot4  -->
 		<dependency>

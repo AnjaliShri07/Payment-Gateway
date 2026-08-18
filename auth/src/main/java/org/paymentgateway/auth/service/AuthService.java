@@ -1,106 +1,194 @@
 package org.paymentgateway.auth.service;
 
-import jakarta.transaction.Transactional;
-import org.paymentgateway.auth.dto.AuthResponse;
+import org.paymentgateway.auth.constants.ERole;
+import org.paymentgateway.auth.dto.request.LoginRequest;
+import org.paymentgateway.auth.dto.request.LogoutRequest;
+import org.paymentgateway.auth.dto.request.RegisterRequest;
+import org.paymentgateway.auth.dto.request.TokenRefreshRequest;
+import org.paymentgateway.auth.dto.response.AuthResponse;
+import org.paymentgateway.auth.dto.response.TokenRefreshResponse;
 import org.paymentgateway.auth.entity.RefreshToken;
+import org.paymentgateway.auth.entity.Role;
 import org.paymentgateway.auth.entity.User;
-import org.paymentgateway.auth.exception.ApiException;
-import org.paymentgateway.auth.repository.RefreshTokenRepository;
+import org.paymentgateway.auth.exception.*;
+import org.paymentgateway.auth.repository.RoleRepository;
 import org.paymentgateway.auth.repository.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.paymentgateway.auth.security.CustomUserDetails;
+import org.paymentgateway.auth.security.jwt.JwtTokenProvider;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import java.time.Instant;
-import java.util.Map;
-import java.util.UUID;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-/**
- * AuthService: handles registration, login, token refresh, logout.
- *
- * OpenAI docs: https://platform.openai.com/docs
- * Java docs: https://docs.oracle.com/en/java/
- */
 @Service
-public class AuthService extends BaseService {
+public class AuthService {
 
+    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final JwtService jwtService;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenService refreshTokenService;
 
-    private final long refreshTokenValiditySeconds = 1209600L; // 14 days
-
-    public AuthService(UserRepository userRepository,
-                       RefreshTokenRepository refreshTokenRepository,
-                       JwtService jwtService) {
+    public AuthService(
+        AuthenticationManager authenticationManager,
+        UserRepository userRepository,
+        RoleRepository roleRepository,
+        PasswordEncoder passwordEncoder,
+        JwtTokenProvider jwtTokenProvider,
+        RefreshTokenService refreshTokenService
+    ) {
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
-        this.jwtService = jwtService;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
-    public AuthResponse login(String username, String password) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ApiException("Invalid credentials"));
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new ApiException("Invalid credentials");
+    public void register(RegisterRequest registerRequest) {
+        if (registerRequest == null) {
+            throw new BadRequestException("Registration request payload cannot be null");
         }
 
-        String accessToken = jwtService.generateAccessToken(
-                user.getUsername(),
-                Map.of("roles", user.getRole())
+        if (userRepository.existsByUsername(registerRequest.username())) {
+            throw new UserAlreadyExistsException("Error: Username '" + registerRequest.username() + "' is already taken!");
+        }
+
+        if (userRepository.existsByEmail(registerRequest.email())) {
+            throw new UserAlreadyExistsException("Error: Email '" + registerRequest.email() + "' is already in use!");
+        }
+
+        User user = new User(
+            registerRequest.username().trim(),
+            registerRequest.email().trim().toLowerCase(),
+            passwordEncoder.encode(registerRequest.password())
         );
 
-        RefreshToken refreshToken = createRefreshToken(user);
+        Set<String> strRoles = registerRequest.roles();
+        Set<Role> roles = new HashSet<>();
 
-        return new AuthResponse(accessToken, refreshToken.getToken(), jwtService.accessTokenValiditySeconds);
+        if (strRoles == null || strRoles.isEmpty()) {
+            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_USER is not found."));
+            roles.add(userRole);
+        } else {
+            for (String roleStr : strRoles) {
+                if (!StringUtils.hasText(roleStr)) {
+                    continue;
+                }
+                String normalizedRole = roleStr.trim().toUpperCase();
+                switch (normalizedRole) {
+                    case "ADMIN", "ROLE_ADMIN" -> {
+                        Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+                            .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_ADMIN is not found."));
+                        roles.add(adminRole);
+                    }
+                    case "MOD", "MODERATOR", "ROLE_MODERATOR" -> {
+                        Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
+                            .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_MODERATOR is not found."));
+                        roles.add(modRole);
+                    }
+                    case "USER", "ROLE_USER" -> {
+                        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                            .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_USER is not found."));
+                        roles.add(userRole);
+                    }
+                    default -> throw new InvalidRoleException("Error: Role '" + roleStr + "' is invalid. Allowed roles: USER, MODERATOR, ADMIN");
+                }
+            }
+            if (roles.isEmpty()) {
+                Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                    .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_USER is not found."));
+                roles.add(userRole);
+            }
+        }
+
+        user.setRoles(roles);
+        userRepository.save(user);
+    }
+
+    public AuthResponse login(LoginRequest loginRequest) {
+        if (loginRequest == null) {
+            throw new BadRequestException("Login request cannot be null");
+        }
+
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                loginRequest.usernameOrEmail().trim(),
+                loginRequest.password()
+            )
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        String jwt = jwtTokenProvider.generateToken(authentication);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+
+        List<String> roles = userDetails.getAuthorities() != null
+            ? userDetails.getAuthorities().stream()
+                .filter(Objects::nonNull)
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList())
+            : List.of();
+
+        return AuthResponse.of(
+            jwt,
+            refreshToken.getToken(),
+            jwtTokenProvider.getExpirationMs() / 1000,
+            userDetails.getId(),
+            userDetails.getUsername(),
+            userDetails.getEmail(),
+            roles
+        );
     }
 
     @Transactional
-    public AuthResponse refresh(String refreshTokenStr) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenStr)
-                .orElseThrow(() -> new ApiException("Invalid refresh token"));
-
-        if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
-            refreshTokenRepository.delete(refreshToken);
-            throw new ApiException("Refresh token expired");
+    public TokenRefreshResponse refreshToken(TokenRefreshRequest request) {
+        if (request == null || !StringUtils.hasText(request.refreshToken())) {
+            throw new BadRequestException("Refresh token cannot be blank");
         }
 
-        User user = refreshToken.getUser();
-        String accessToken = jwtService.generateAccessToken(user.getUsername(), Map.of("roles", user.getRoles()));
+        String requestRefreshToken = request.refreshToken().trim();
 
-        // rotate refresh token
-        refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setExpiryDate(Instant.now().plusSeconds(refreshTokenValiditySeconds));
-        refreshTokenRepository.save(refreshToken);
+        return refreshTokenService.findByToken(requestRefreshToken)
+            .map(refreshTokenService::verifyExpiration)
+            .map(refreshTokenService::rotateRefreshToken)
+            .map(token -> {
+                User user = token.getUser();
+                if (user == null) {
+                    throw new UserNotFoundException("User associated with refresh token no longer exists");
+                }
+                CustomUserDetails userDetails = CustomUserDetails.build(user);
+                String newAccessToken = jwtTokenProvider.generateTokenFromUserDetails(userDetails);
 
-        return new AuthResponse(accessToken, refreshToken.getToken(), jwtService.accessTokenValiditySeconds);
-    }
-
-    public void logout(String refreshTokenStr) {
-        refreshTokenRepository.findByToken(refreshTokenStr)
-                .ifPresent(refreshTokenRepository::delete);
+                return TokenRefreshResponse.of(
+                    newAccessToken,
+                    token.getToken(),
+                    jwtTokenProvider.getExpirationMs() / 1000
+                );
+            })
+            .orElseThrow(() -> new TokenRefreshException(requestRefreshToken, "Refresh token is not found in database!"));
     }
 
     @Transactional
-    public User register(String username, String password, String email) {
-        if (userRepository.existsByUsername(username)) {
-            throw new ApiException("Username already exists");
+    public void logout(LogoutRequest logoutRequest) {
+        if (logoutRequest != null && StringUtils.hasText(logoutRequest.refreshToken())) {
+            refreshTokenService.revokeRefreshToken(logoutRequest.refreshToken().trim());
         }
-        User user = new User();
-        user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setEmail(email);
-        user.setRoles("USER");
-        return userRepository.save(user);
-    }
-
-    private RefreshToken createRefreshToken(User user) {
-        RefreshToken token = new RefreshToken();
-        token.setToken(UUID.randomUUID().toString());
-        token.setUser(user);
-        token.setExpiryDate(Instant.now().plusSeconds(refreshTokenValiditySeconds));
-        return refreshTokenRepository.save(token);
+        SecurityContextHolder.clearContext();
     }
 }

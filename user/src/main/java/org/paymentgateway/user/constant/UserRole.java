@@ -1,6 +1,7 @@
 package org.paymentgateway.user.constant;
 
 public enum UserRole {
-    CUSTOMER,
-    ADMIN
+    ROLE_USER,
+    ROLE_MODERATOR,
+    ROLE_ADMIN
 }
