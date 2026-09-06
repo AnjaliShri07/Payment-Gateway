@@ -112,11 +112,11 @@ auth/
 - Spring Boot Starter Web, Security, Data JPA, Validation.
 - `io.jsonwebtoken:jjwt-api`, `jjwt-impl`, `jjwt-jackson` (0.12.6).
 - `org.springdoc:springdoc-openapi-starter-webmvc-ui`.
-- H2 Database runtime dependency.
+- MySQL database added.
 - Java compiler settings targeting modern Java baseline.
 
 #### [NEW] [application.yml](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/resources/application.yml)
-- Server port (`8081`), context path, JPA/H2 config.
+- Server port (`8082`), context path, JPA/H2 config.
 - `app.jwt.secret`, `app.jwt.expiration-ms` (e.g. 900,000 = 15m), `app.jwt.refresh-expiration-ms` (e.g. 604,800,000 = 7 days).
 
 ---
