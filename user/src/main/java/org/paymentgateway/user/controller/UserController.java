@@ -54,10 +54,7 @@ public class UserController {
     @GetMapping
     public ResponseEntity<BaseResponse<List<User>>> getAll(@RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
         log.info("Fetching all users");
-        Optional<AuthUserProfile> authUserProfile = authenticationServiceClient.getAuthenticatedUser(authHeader);
-        if (authUserProfile.isPresent()) {
-            log.info("Verified user profile against Auth microservice");
-        }
+        authenticateUser(authHeader);
         return ResponseEntity.ok(BaseResponse.success("Fetched all records", userService.findAll()));
     }
 
@@ -70,10 +67,7 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse<User>> getById(@PathVariable Long id, @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
         log.info("Fetching user with id: {}", id);
-        Optional<AuthUserProfile> authUserProfile = authenticationServiceClient.getAuthenticatedUser(authHeader);
-        if (authUserProfile.isPresent()) {
-            log.info("Verified user profile against Auth microservice for user ID: {}", id);
-        }
+        authenticateUser(authHeader);
         return userService.findById(id)
                 .map(entity -> ResponseEntity.ok(BaseResponse.success("Record found", entity)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -89,10 +83,7 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<BaseResponse<User>> update(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest entity, @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
         log.info("Updating user with id: {}", id);
-        Optional<AuthUserProfile> authUserProfile = authenticationServiceClient.getAuthenticatedUser(authHeader);
-        if (authUserProfile.isPresent()) {
-            log.info("Verified user profile against Auth microservice for user ID: {}", id);
-        }
+        authenticateUser(authHeader);
         return userService.update(id, entity)
                 .map(updated -> ResponseEntity.ok(
                         BaseResponse.success("Record updated successfully", updated)))
@@ -108,10 +99,7 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<BaseResponse<Void>> delete(@PathVariable Long id, @RequestHeader(HttpHeaders.AUTHORIZATION) String authHeader) {
         log.info("Deleting user with id: {}", id);
-        Optional<AuthUserProfile> authUserProfile = authenticationServiceClient.getAuthenticatedUser(authHeader);
-        if (authUserProfile.isPresent()) {
-            log.info("Verified user profile against Auth microservice for user ID: {}", id);
-        }
+        authenticateUser(authHeader);
         userService.delete(id);
         return ResponseEntity.ok(BaseResponse.success("Record deleted successfully", null));
     }
@@ -128,5 +116,10 @@ public class UserController {
         log.error("Circuit breaker triggered for getById with id: {}", id);
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(BaseResponse.error("Service temporarily unavailable, please try again later", null));
+    }
+
+    public void authenticateUser(String authHeader){
+        Optional<AuthUserProfile> authUserProfile = authenticationServiceClient.getAuthenticatedUser(authHeader);
+        authUserProfile.ifPresent(userProfile -> log.info("Verified user profile against Auth microservice for user ID: {}", userProfile.id()));
     }
 }
