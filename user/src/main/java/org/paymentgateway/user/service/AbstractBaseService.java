@@ -3,6 +3,7 @@ package org.paymentgateway.user.service;
 import org.paymentgateway.user.repository.BaseRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Shared base implementation for service classes that expose default CRUD operations.
@@ -24,8 +25,8 @@ public abstract class AbstractBaseService<T, ID> implements BaseService<T, ID> {
     }
 
     @Override
-    public T findById(ID id) {
-        return baseRepository.findById(id).orElse(null);
+    public Optional<T> findById(ID id) {
+        return baseRepository.findById(id);
     }
 
     @Override
@@ -40,5 +41,5 @@ public abstract class AbstractBaseService<T, ID> implements BaseService<T, ID> {
 
     // update left abstract — subclasses can override with entity-specific logic
     @Override
-    public abstract T update(ID id, T entity);
+    public abstract Optional<T> update(ID id, T entity);
 }

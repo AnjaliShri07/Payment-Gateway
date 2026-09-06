@@ -65,8 +65,8 @@ class JwtSecurityTests {
         String token = provider.generateTokenFromUserDetails(details);
 
         assertTrue(provider.validateJwtToken(token));
-        assertEquals("alice", provider.getUsernameFromJwtToken(token));
-        assertEquals(4L, provider.getUserIdFromJwtToken(token));
+        assertEquals("alice", provider.getUsernameFromJwtToken(token).orElseThrow());
+        assertEquals(4L, provider.getUserIdFromJwtToken(token).orElseThrow());
         assertEquals(List.of("ROLE_USER"), provider.getRolesFromJwtToken(token));
     }
 
@@ -78,6 +78,6 @@ class JwtSecurityTests {
         );
 
         assertFalse(provider.validateJwtToken(""));
-        assertNull(provider.getUsernameFromJwtToken(null));
+        assertTrue(provider.getUsernameFromJwtToken(null).isEmpty());
     }
 }

@@ -74,12 +74,10 @@ public class UserController {
         if (authUserProfile.isPresent()) {
             log.info("Verified user profile against Auth microservice for user ID: {}", id);
         }
-        User entity = userService.findById(id);
-        if (entity != null) {
-            return ResponseEntity.ok(BaseResponse.success("Record found", entity));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("User not found", null));
+        return userService.findById(id)
+                .map(entity -> ResponseEntity.ok(BaseResponse.success("Record found", entity)))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(BaseResponse.error("User not found", null)));
     }
 
     @Operation(summary = "Update user")
@@ -95,12 +93,11 @@ public class UserController {
         if (authUserProfile.isPresent()) {
             log.info("Verified user profile against Auth microservice for user ID: {}", id);
         }
-        User updated = userService.update(id, entity);
-        if (updated != null) {
-            return ResponseEntity.ok(BaseResponse.success("Record updated successfully", updated));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(BaseResponse.error("User not found", null));
+        return userService.update(id, entity)
+                .map(updated -> ResponseEntity.ok(
+                        BaseResponse.success("Record updated successfully", updated)))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(BaseResponse.error("User not found", null)));
     }
 
     @Operation(summary = "Delete user")

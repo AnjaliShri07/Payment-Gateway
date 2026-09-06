@@ -3,7 +3,6 @@ package org.paymentgateway.auth.service;
 import org.paymentgateway.auth.dto.response.UserProfileResponse;
 import org.paymentgateway.auth.entity.JwtUser;
 import org.paymentgateway.auth.exception.BadRequestException;
-import org.paymentgateway.auth.exception.UserNotFoundException;
 import org.paymentgateway.auth.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +11,7 @@ import org.springframework.util.StringUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,25 +24,23 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserProfileResponse getUserProfile(Long userId) {
+    public Optional<UserProfileResponse> getUserProfile(Long userId) {
         if (userId == null) {
             throw new BadRequestException("User ID cannot be null");
         }
 
-        JwtUser user = userRepository.findById(userId)
-            .orElseThrow(() -> UserNotFoundException.withId(userId));
-        return mapToUserProfileResponse(user);
+        return userRepository.findById(userId)
+            .map(this::mapToUserProfileResponse);
     }
 
     @Transactional(readOnly = true)
-    public UserProfileResponse getUserProfileByUsername(String username) {
+    public Optional<UserProfileResponse> getUserProfileByUsername(String username) {
         if (!StringUtils.hasText(username)) {
             throw new BadRequestException("Username cannot be blank");
         }
 
-        JwtUser user = userRepository.findByUsername(username.trim())
-            .orElseThrow(() -> UserNotFoundException.withIdentifier(username));
-        return mapToUserProfileResponse(user);
+        return userRepository.findByUsername(username.trim())
+            .map(this::mapToUserProfileResponse);
     }
 
     @Transactional(readOnly = true)
@@ -54,10 +52,6 @@ public class UserService {
     }
 
     private UserProfileResponse mapToUserProfileResponse(JwtUser user) {
-        if (user == null) {
-            return null;
-        }
-
         List<String> roles = user.getRoles() != null
             ? user.getRoles().stream()
                 .filter(Objects::nonNull)
@@ -77,7 +71,12 @@ public class UserService {
         );
     }
 
-    public JwtUser loadUserByUsername(String username) {
-        return null;
+    @Transactional(readOnly = true)
+    public Optional<JwtUser> loadUserByUsername(String username) {
+        if (!StringUtils.hasText(username)) {
+            throw new BadRequestException("Username cannot be blank");
+        }
+
+        return userRepository.findByUsername(username.trim());
     }
 }

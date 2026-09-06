@@ -6,6 +6,7 @@ import org.paymentgateway.auth.controller.AdminController;
 import org.paymentgateway.auth.controller.UserController;
 import org.paymentgateway.auth.dto.response.UserProfileResponse;
 import org.paymentgateway.auth.exception.UnauthorizedException;
+import org.paymentgateway.auth.exception.UserNotFoundException;
 import org.paymentgateway.auth.security.JwtUserDetails;
 import org.paymentgateway.auth.service.UserService;
 import org.mockito.Mock;
@@ -74,11 +75,25 @@ class ControllerTests {
         UserProfileResponse profile = new UserProfileResponse(
             5L, "alice", "alice@example.com", List.of(), true, null, null
         );
-        when(userService.getUserProfile(5L)).thenReturn(profile);
+        when(userService.getUserProfile(5L)).thenReturn(java.util.Optional.of(profile));
 
         var response = new UserController(userService).getCurrentUser(details);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(profile, response.getBody().data());
+    }
+
+    @Test
+    void currentUserRejectsMissingProfile() {
+        JwtUserDetails details = new JwtUserDetails(
+            5L, "alice", "alice@example.com", "password",
+            List.of(), true, true, true, true
+        );
+        when(userService.getUserProfile(5L)).thenReturn(java.util.Optional.empty());
+
+        assertThrows(
+            UserNotFoundException.class,
+            () -> new UserController(userService).getCurrentUser(details)
+        );
     }
 }

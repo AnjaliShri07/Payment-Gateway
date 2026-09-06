@@ -42,7 +42,9 @@ public class UserController {
         if (userDetails == null) {
             throw new UnauthorizedException("User is not authenticated");
         }
-        UserProfileResponse profile = userService.getUserProfile(userDetails.getId());
+        UserProfileResponse profile = userService.getUserProfile(userDetails.getId())
+            .orElseThrow(() -> org.paymentgateway.auth.exception.UserNotFoundException
+                .withId(userDetails.getId()));
         return ResponseEntity.ok(ApiResponse.success("Profile fetched successfully", profile));
     }
 }

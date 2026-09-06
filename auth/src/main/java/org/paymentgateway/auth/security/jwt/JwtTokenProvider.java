@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -87,27 +88,20 @@ public class JwtTokenProvider {
             .compact();
     }
 
-    public String getUsernameFromJwtToken(String token) {
-        if (!StringUtils.hasText(token)) {
-            return null;
-        }
-        Claims claims = parseClaims(token);
-        return claims != null ? claims.getSubject() : null;
+    public Optional<String> getUsernameFromJwtToken(String token) {
+        return parseClaims(token)
+            .map(Claims::getSubject)
+            .filter(StringUtils::hasText);
     }
 
-    public Long getUserIdFromJwtToken(String token) {
-        if (!StringUtils.hasText(token)) {
-            return null;
-        }
-        Claims claims = parseClaims(token);
-        if (claims == null) {
-            return null;
-        }
-        Object userId = claims.get(SecurityConstants.CLAIM_USER_ID);
-        if (userId instanceof Number number) {
-            return number.longValue();
-        }
-        return null;
+    public Optional<Long> getUserIdFromJwtToken(String token) {
+        return parseClaims(token)
+            .flatMap(claims -> {
+                Object userId = claims.get(SecurityConstants.CLAIM_USER_ID);
+                return userId instanceof Number number
+                    ? Optional.of(number.longValue())
+                    : Optional.empty();
+            });
     }
 
 
@@ -115,11 +109,12 @@ public class JwtTokenProvider {
         if (!StringUtils.hasText(token)) {
             return Collections.emptyList();
         }
-        Claims claims = parseClaims(token);
-        if (claims == null) {
+        Optional<Claims> claims = parseClaims(token);
+        if (claims.isEmpty()) {
             return Collections.emptyList();
         }
-        Object rolesObj = claims.get(SecurityConstants.CLAIM_ROLES);
+
+        Object rolesObj = claims.get().get(SecurityConstants.CLAIM_ROLES);
         if (rolesObj instanceof List<?> list) {
             return list.stream()
                 .filter(Objects::nonNull)
@@ -129,15 +124,17 @@ public class JwtTokenProvider {
         return Collections.emptyList();
     }
 
-    public Claims parseClaims(String token) {
+    public Optional<Claims> parseClaims(String token) {
         if (!StringUtils.hasText(token)) {
-            return null;
+            return Optional.empty();
         }
-        return Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload();
+        return Optional.of(
+            Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+        );
     }
 
     public boolean validateJwtToken(String authToken) {
@@ -173,7 +170,8 @@ public class JwtTokenProvider {
      */
     public boolean isTokenExpired(String token) {
         try {
-            Claims claims = parseClaims(token);
+            Claims claims = parseClaims(token)
+                .orElseThrow(() -> new IllegalArgumentException("JWT claims are unavailable"));
             return claims.getExpiration().before(new Date());
         } catch (ExpiredJwtException e) {
             return true;
@@ -185,7 +183,8 @@ public class JwtTokenProvider {
      */
     public long getExpirationTimeRemaining(String token) {
         try {
-            Claims claims = parseClaims(token);
+            Claims claims = parseClaims(token)
+                .orElseThrow(() -> new IllegalArgumentException("JWT claims are unavailable"));
             long expirationTimeMs = claims.getExpiration().getTime();
             long currentTimeMs = System.currentTimeMillis();
             return (expirationTimeMs - currentTimeMs) / 1000;

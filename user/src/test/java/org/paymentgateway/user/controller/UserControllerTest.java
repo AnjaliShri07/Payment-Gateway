@@ -56,7 +56,9 @@ class UserControllerTest {
             "false, 404, ERROR"
     })
     void getByIdReturnsExpectedStatus(boolean found, int status, String responseStatus) {
-        when(userService.findById(1L)).thenReturn(found ? new User() : null);
+        when(userService.findById(1L)).thenReturn(found
+                ? Optional.of(new User())
+                : Optional.empty());
 
         ResponseEntity<BaseResponse<User>> response =
                 controller.getById(1L, "Bearer token");
@@ -71,7 +73,9 @@ class UserControllerTest {
             "false, 404, ERROR"
     })
     void updateReturnsExpectedStatus(boolean updated, int status, String responseStatus) {
-        User result = updated ? new User() : null;
+        Optional<User> result = updated
+                ? Optional.of(new User())
+                : Optional.empty();
         when(userService.update(eq(1L), any(UserUpdateRequest.class))).thenReturn(result);
 
         ResponseEntity<BaseResponse<User>> response =

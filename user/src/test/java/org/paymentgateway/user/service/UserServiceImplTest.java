@@ -42,14 +42,14 @@ class UserServiceImplTest {
         User user = new User();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        assertThat(userService.findById(1L)).isSameAs(user);
+        assertThat(userService.findById(1L)).containsSame(user);
     }
 
     @Test
     void findByIdReturnsNullWhenMissing() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThat(userService.findById(1L)).isNull();
+        assertThat(userService.findById(1L)).isEmpty();
     }
 
     @Test
@@ -80,9 +80,9 @@ class UserServiceImplTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.save(existing)).thenReturn(existing);
 
-        User result = userService.update(1L, update);
+        Optional<User> result = userService.update(1L, update);
 
-        assertThat(result).isSameAs(existing);
+        assertThat(result).containsSame(existing);
         assertThat(existing.getUsername()).isEqualTo("new-user");
         assertThat(existing.getEmail()).isEqualTo("old@example.com");
         assertThat(existing.getPassword()).isEqualTo("old-password");
@@ -114,7 +114,7 @@ class UserServiceImplTest {
     void updateReturnsNullAndDoesNotSaveWhenUserIsMissing() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThat(userService.update(1L, new UserUpdateRequest())).isNull();
+        assertThat(userService.update(1L, new UserUpdateRequest())).isEmpty();
 
         verify(userRepository, never()).save(any());
     }

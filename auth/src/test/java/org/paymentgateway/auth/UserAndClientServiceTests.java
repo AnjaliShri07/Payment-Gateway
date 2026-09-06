@@ -80,6 +80,36 @@ class UserAndClientServiceTests {
     }
 
     @Test
+    void getUserProfileReturnsEmptyWhenUserDoesNotExist() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertTrue(userService.getUserProfile(99L).isEmpty());
+    }
+
+    @Test
+    void getUserProfileByUsernameReturnsEmptyWhenUserDoesNotExist() {
+        when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
+
+        assertTrue(userService.getUserProfileByUsername(" missing ").isEmpty());
+    }
+
+    @Test
+    void loadUserByUsernameReturnsEmptyWhenUserDoesNotExist() {
+        when(userRepository.findByUsername("missing")).thenReturn(Optional.empty());
+
+        assertTrue(userService.loadUserByUsername(" missing ").isEmpty());
+    }
+
+    @Test
+    void loadUserByUsernameReturnsMatchingUser() {
+        JwtUser user = new JwtUser();
+        user.setUsername("alice");
+        when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
+
+        assertSame(user, userService.loadUserByUsername("alice").orElseThrow());
+    }
+
+    @Test
     void registerClientHashesSecretAndPersistsClient() {
         when(passwordEncoder.encode(any(String.class))).thenReturn("hashed-secret");
 

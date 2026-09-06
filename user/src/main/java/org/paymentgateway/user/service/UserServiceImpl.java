@@ -6,6 +6,8 @@ import org.paymentgateway.user.entity.User;
 import org.paymentgateway.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
  * Service implementation for user management workflows.
  * Provides CRUD behavior and user-specific queries for the payment gateway.
@@ -22,9 +24,8 @@ public class UserServiceImpl extends AbstractBaseService<User, Long> {
     }
 
     @Override
-    public User update(Long id, User user) {
-        User existing = userRepository.findById(id).orElse(null);
-        if (existing != null) {
+    public Optional<User> update(Long id, User user) {
+        return userRepository.findById(id).map(existing -> {
             if (user.getUsername() != null) {
                 existing.setUsername(user.getUsername());
             }
@@ -38,13 +39,11 @@ public class UserServiceImpl extends AbstractBaseService<User, Long> {
                 existing.setRoles(user.getRoles());
             }
             return userRepository.save(existing);
-        }
-        return null;
+        });
     }
 
-    public User update(Long id, UserUpdateRequest request) {
-        User existing = userRepository.findById(id).orElse(null);
-        if (existing != null) {
+    public Optional<User> update(Long id, UserUpdateRequest request) {
+        return userRepository.findById(id).map(existing -> {
             if (request.getUsername() != null) {
                 existing.setUsername(request.getUsername());
             }
@@ -70,12 +69,11 @@ public class UserServiceImpl extends AbstractBaseService<User, Long> {
                 existing.setAccountNonLocked(request.getAccountNonLocked());
             }
             return userRepository.save(existing);
-        }
-        return null;
+        });
     }
 
     @Override
-    public User findByEmail(String email) {
-        return null;
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 }
