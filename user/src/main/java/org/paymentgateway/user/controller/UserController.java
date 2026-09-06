@@ -11,7 +11,7 @@ import org.paymentgateway.user.DTO.BaseResponse;
 import org.paymentgateway.user.client.AuthenticationServiceClient;
 import org.paymentgateway.user.client.dto.AuthApiResponse;
 import org.paymentgateway.user.client.dto.AuthUserProfile;
-import org.paymentgateway.user.dto.UserUpdateRequest;
+import org.paymentgateway.user.DTO.UserUpdateRequest;
 import org.paymentgateway.user.entity.User;
 import org.paymentgateway.user.service.UserServiceImpl;
 import org.springframework.http.HttpHeaders;

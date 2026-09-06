@@ -1,4 +1,4 @@
-package org.paymentgateway.user.dto;
+package org.paymentgateway.user.DTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;

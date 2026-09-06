@@ -1,7 +1,7 @@
 package org.paymentgateway.user.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.paymentgateway.user.dto.UserUpdateRequest;
+import org.paymentgateway.user.DTO.UserUpdateRequest;
 import org.paymentgateway.user.entity.User;
 import org.paymentgateway.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
