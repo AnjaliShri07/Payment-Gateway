@@ -25,62 +25,81 @@ This plan details the end-to-end architecture and implementation of an enterpris
 ## Proposed Project Structure & Components
 
 ```
-d:/Antigravity IDE/workspaces/test/security/
-├── pom.xml
-├── src/main/
-│   ├── java/com/example/security/
-│   │   ├── SecurityApplication.java
-│   │   ├── config/
-│   │   │   ├── SecurityConfig.java
-│   │   │   ├── OpenApiConfig.java
-│   │   │   └── JpaAuditingConfig.java
-│   │   ├── constants/
-│   │   │   ├── ERole.java
-│   │   │   └── SecurityConstants.java
-│   │   ├── controller/
-│   │   │   ├── AuthController.java
-│   │   │   ├── UserController.java
-│   │   │   └── AdminController.java
-│   │   ├── dto/
-│   │   │   ├── request/
-│   │   │   │   ├── LoginRequest.java
-│   │   │   │   ├── RegisterRequest.java
-│   │   │   │   └── TokenRefreshRequest.java
-│   │   │   └── response/
-│   │   │       ├── ApiResponse.java
-│   │   │       ├── AuthResponse.java
-│   │   │       ├── TokenRefreshResponse.java
-│   │   │       ├── UserProfileResponse.java
-│   │   │       └── ErrorResponse.java
-│   │   ├── entity/
-│   │   │   ├── User.java
-│   │   │   ├── Role.java
-│   │   │   ├── RefreshToken.java
-│   │   │   └── BaseEntity.java
-│   │   ├── exception/
-│   │   │   ├── GlobalExceptionHandler.java
-│   │   │   ├── TokenRefreshException.java
-│   │   │   ├── ResourceNotFoundException.java
-│   │   │   └── UserAlreadyExistsException.java
-│   │   ├── repository/
-│   │   │   ├── UserRepository.java
-│   │   │   ├── RoleRepository.java
-│   │   │   └── RefreshTokenRepository.java
-│   │   ├── security/
-│   │   │   ├── jwt/
-│   │   │   │   ├── JwtTokenProvider.java
-│   │   │   │   ├── JwtAuthenticationFilter.java
-│   │   │   │   └── JwtAuthenticationEntryPoint.java
-│   │   │   ├── JwtAccessDeniedHandler.java
-│   │   │   ├── JwtUserDetails.java
-│   │   │   └── JwtUserDetailsService.java
-│   │   ├── service/
-│   │   │   ├── AuthenticationService.java
-│   │   │   ├── RefreshTokenService.java
-│   │   │   └── UserService.java
-│   └── resources/
-│       ├── application.yml
-│       └── application-prod.yml
+auth/
+├── src/
+│   ├── main/
+│   │   ├── java/org/paymentgateway/auth/
+│   │   │   ├── AuthApplication.java
+│   │   │   │
+│   │   │   ├── config/
+│   │   │   │   ├── SecurityConfig.java
+│   │   │   │   ├── JpaAuditingConfig.java
+│   │   │   │   └── OpenApiConfig.java
+│   │   │   │
+│   │   │   ├── controller/
+│   │   │   │   ├── AuthenticationController.java
+│   │   │   │   ├── UserController.java
+│   │   │   │   └── AdminController.java
+│   │   │   │
+│   │   │   ├── service/
+│   │   │   │   ├── AuthenticationService.java
+│   │   │   │   ├── RefreshTokenService.java
+│   │   │   │   ├── UserService.java
+│   │   │   │   └── ClientApplicationService.java
+│   │   │   │
+│   │   │   ├── repository/
+│   │   │   │   ├── UserRepository.java
+│   │   │   │   ├── RoleRepository.java
+│   │   │   │   ├── RefreshTokenRepository.java
+│   │   │   │   └── ClientApplicationRepository.java
+│   │   │   │
+│   │   │   ├── entity/
+│   │   │   │   ├── BaseEntity.java
+│   │   │   │   ├── JwtUser.java
+│   │   │   │   ├── Role.java
+│   │   │   │   ├── RefreshToken.java
+│   │   │   │   └── ClientApplication.java
+│   │   │   │
+│   │   │   ├── dto/
+│   │   │   │   ├── request/
+│   │   │   │   └── response/
+│   │   │   │
+│   │   │   ├── security/
+│   │   │   │   ├── JwtUserDetails.java
+│   │   │   │   ├── JwtUserDetailsService.java
+│   │   │   │   ├── JwtAccessDeniedHandler.java
+│   │   │   │   └── jwt/
+│   │   │   │       ├── JwtTokenProvider.java
+│   │   │   │       ├── JwtAuthenticationFilter.java
+│   │   │   │       └── JwtAuthenticationEntryPoint.java
+│   │   │   │
+│   │   │   ├── validation/
+│   │   │   │   ├── annotation/
+│   │   │   │   ├── validator/
+│   │   │   │   └── service/
+│   │   │   │
+│   │   │   ├── exception/
+│   │   │   │   ├── GlobalExceptionHandler.java
+│   │   │   │   ├── BadRequestException.java
+│   │   │   │   ├── UserNotFoundException.java
+│   │   │   │   ├── UserAlreadyExistsException.java
+│   │   │   │   ├── TokenExpiredException.java
+│   │   │   │   └── TokenRefreshException.java
+│   │   │   │
+│   │   │   └── constants/
+│   │   │       ├── ERole.java
+│   │   │       └── SecurityConstants.java
+│   │   │
+│   │   └── resources/
+│   │       └── application.yml
+│   │
+│   └── test/
+│       └── java/org/paymentgateway/auth/
+│           ├── AuthApplicationTests.java
+│           ├── ControllerTests.java
+│           ├── JwtSecurityTests.java
+│           ├── RefreshTokenServiceTests.java
+│           └── UserAndClientServiceTests.java
 ```
 
 ---
