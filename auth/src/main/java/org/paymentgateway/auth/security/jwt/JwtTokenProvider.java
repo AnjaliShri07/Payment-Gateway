@@ -9,7 +9,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
 import org.paymentgateway.auth.constants.SecurityConstants;
-import org.paymentgateway.auth.security.CustomUserDetails;
+import org.paymentgateway.auth.security.JwtUserDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,13 +55,13 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(Authentication authentication) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userPrincipal)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof JwtUserDetails userPrincipal)) {
             throw new IllegalArgumentException("Authentication principal must be a non-null CustomUserDetails");
         }
         return generateTokenFromUserDetails(userPrincipal);
     }
 
-    public String generateTokenFromUserDetails(CustomUserDetails userPrincipal) {
+    public String generateTokenFromUserDetails(JwtUserDetails userPrincipal) {
         if (userPrincipal == null) {
             throw new IllegalArgumentException("User principal cannot be null");
         }
@@ -110,7 +110,7 @@ public class JwtTokenProvider {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
+
     public List<String> getRolesFromJwtToken(String token) {
         if (!StringUtils.hasText(token)) {
             return Collections.emptyList();
@@ -167,4 +167,31 @@ public class JwtTokenProvider {
     public long getExpirationMs() {
         return jwtExpirationMs;
     }
+
+    /**
+     * Check if token is expired
+     */
+    public boolean isTokenExpired(String token) {
+        try {
+            Claims claims = parseClaims(token);
+            return claims.getExpiration().before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true;
+        }
+    }
+
+    /**
+     * Get token expiration time remaining in seconds
+     */
+    public long getExpirationTimeRemaining(String token) {
+        try {
+            Claims claims = parseClaims(token);
+            long expirationTimeMs = claims.getExpiration().getTime();
+            long currentTimeMs = System.currentTimeMillis();
+            return (expirationTimeMs - currentTimeMs) / 1000;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
 }

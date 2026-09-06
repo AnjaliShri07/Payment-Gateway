@@ -7,6 +7,10 @@ import org.paymentgateway.user.constant.UserRole;
 
 import java.util.Objects;
 
+/**
+ * Represents an application role assigned to a user.
+ * Roles are persisted as enumerated values that control authorization.
+ */
 @Getter
 @Setter
 @Entity

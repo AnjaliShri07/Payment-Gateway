@@ -1,7 +1,7 @@
 package org.paymentgateway.auth.service;
 
 import org.paymentgateway.auth.entity.RefreshToken;
-import org.paymentgateway.auth.entity.User;
+import org.paymentgateway.auth.entity.JwtUser;
 import org.paymentgateway.auth.exception.TokenExpiredException;
 import org.paymentgateway.auth.exception.TokenInvalidException;
 import org.paymentgateway.auth.exception.TokenRefreshException;
@@ -47,7 +47,7 @@ public class RefreshTokenService {
             throw new IllegalArgumentException("User ID cannot be null");
         }
 
-        User user = userRepository.findById(userId)
+        JwtUser user = userRepository.findById(userId)
             .orElseThrow(() -> UserNotFoundException.withId(userId));
 
         RefreshToken refreshToken = refreshTokenRepository.findByUser(user)

@@ -4,7 +4,7 @@ This plan details the end-to-end architecture and implementation of an enterpris
 
 ## Architecture Highlights
 
-1. **Stateless Security Architecture**: Spring Security `SecurityFilterChain` with `SessionCreationPolicy.STATELESS`, CSRF disabled for REST, strictly configured CORS, and custom exception handling.
+1. **Stateless Security Architecture**: Spring Security `SecurityFilterChain` with `SessionCreationPolicy.STATELESS`, CSRF disabled for REST, strictly configured CORS, and Jwt exception handling.
 2. **Access Token + Refresh Token Flow with Rotation**: Short-lived Access Tokens (e.g., 15 minutes) paired with long-lived, database-backed Refresh Tokens (e.g., 7 days) featuring **Token Rotation** to mitigate replay attacks.
 3. **Role-Based Access Control (RBAC)**: Fine-grained roles (`ROLE_USER`, `ROLE_MODERATOR`, `ROLE_ADMIN`) with `@EnableMethodSecurity` and URL pattern matching.
 4. **Modern Java & Clean Layering**: Immutability via Java Records for DTOs, Domain Entities with JPA Auditing, Service Layer decoupling, and Centralized Global Exception Handling (`@RestControllerAdvice`).
@@ -34,6 +34,9 @@ d:/Antigravity IDE/workspaces/test/security/
 │   │   │   ├── SecurityConfig.java
 │   │   │   ├── OpenApiConfig.java
 │   │   │   └── JpaAuditingConfig.java
+│   │   ├── constants/
+│   │   │   ├── ERole.java
+│   │   │   └── SecurityConstants.java
 │   │   ├── controller/
 │   │   │   ├── AuthController.java
 │   │   │   ├── UserController.java
@@ -52,7 +55,6 @@ d:/Antigravity IDE/workspaces/test/security/
 │   │   ├── entity/
 │   │   │   ├── User.java
 │   │   │   ├── Role.java
-│   │   │   ├── ERole.java
 │   │   │   ├── RefreshToken.java
 │   │   │   └── BaseEntity.java
 │   │   ├── exception/
@@ -68,16 +70,14 @@ d:/Antigravity IDE/workspaces/test/security/
 │   │   │   ├── jwt/
 │   │   │   │   ├── JwtTokenProvider.java
 │   │   │   │   ├── JwtAuthenticationFilter.java
-│   │   │   │   └── JwtAuthEntryPoint.java
-│   │   │   ├── CustomAccessDeniedHandler.java
-│   │   │   ├── CustomUserDetails.java
-│   │   │   └── CustomUserDetailsService.java
+│   │   │   │   └── JwtAuthenticationEntryPoint.java
+│   │   │   ├── JwtAccessDeniedHandler.java
+│   │   │   ├── JwtUserDetails.java
+│   │   │   └── JwtUserDetailsService.java
 │   │   ├── service/
-│   │   │   ├── AuthService.java
+│   │   │   ├── AuthenticationService.java
 │   │   │   ├── RefreshTokenService.java
 │   │   │   └── UserService.java
-│   │   └── bootstrap/
-│   │       └── DataInitializer.java
 │   └── resources/
 │       ├── application.yml
 │       └── application-prod.yml
@@ -97,7 +97,7 @@ d:/Antigravity IDE/workspaces/test/security/
 - Java compiler settings targeting modern Java baseline.
 
 #### [NEW] [application.yml](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/resources/application.yml)
-- Server port (`8080`), context path, JPA/H2 config.
+- Server port (`8081`), context path, JPA/H2 config.
 - `app.jwt.secret`, `app.jwt.expiration-ms` (e.g. 900,000 = 15m), `app.jwt.refresh-expiration-ms` (e.g. 604,800,000 = 7 days).
 
 ---
@@ -134,7 +134,7 @@ d:/Antigravity IDE/workspaces/test/security/
 #### [NEW] [JwtAuthenticationFilter.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/security/jwt/JwtAuthenticationFilter.java)
 - HTTP Bearer extraction from `Authorization` header, validation via `JwtTokenProvider`, and population of `SecurityContextHolder`.
 
-#### [NEW] [JwtAuthEntryPoint.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/security/jwt/JwtAuthEntryPoint.java) & [CustomAccessDeniedHandler.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/security/CustomAccessDeniedHandler.java)
+#### [NEW] [JwtAuthEntryPoint.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/security/jwt/JwtAuthEntryPoint.java) & [JwtAccessDeniedHandler.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/security/JwtAccessDeniedHandler.java)
 - Return clean, uniform JSON responses for 401 Unauthorized and 403 Forbidden errors instead of default HTML error pages.
 
 #### [NEW] [SecurityConfig.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/config/SecurityConfig.java)
@@ -160,11 +160,11 @@ d:/Antigravity IDE/workspaces/test/security/
     - `UserProfileResponse(id, username, email, roles, createdAt)`
     - `ApiResponse<T>` & `ErrorResponse`
 
-#### [NEW] [AuthService.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/service/AuthService.java) & [RefreshTokenService.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/service/RefreshTokenService.java)
+#### [NEW] [AuthenticationService.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/service/AuthenticationService.java) & [RefreshTokenService.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/service/RefreshTokenService.java)
 - Business logic for user registration, login credential validation, refresh token rotation, and secure revocation.
 
 #### [NEW] Controllers
-- [AuthController.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/controller/AuthController.java): `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/refresh-token`, `/api/v1/auth/logout`.
+- [AuthenticationController.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/controller/AuthenticationController.java): `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/refresh-token`, `/api/v1/auth/logout`.
 - [UserController.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/controller/UserController.java): `/api/v1/users/me`, `/api/v1/users/public`.
 - [AdminController.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/controller/AdminController.java): `/api/v1/admin/dashboard`, `/api/v1/admin/users`.
 
@@ -190,3 +190,23 @@ d:/Antigravity IDE/workspaces/test/security/
     - `POST /api/v1/auth/logout` -> verify token invalidation.
 
 
+# **Architecture**
+
+┌─────────────┐
+│   Client    │
+└──────┬──────┘
+│ HTTP Request + Bearer Token
+▼
+┌─────────────────────────────────────┐
+│  JWT Authentication Filter          │ ← Validates JWT in Authorization header
+└──────┬──────────────────────────────┘
+│
+▼
+┌─────────────────────────────────────┐
+│  Security Context & Authentication  │ ← Sets authenticated user
+└──────┬──────────────────────────────┘
+│
+▼
+┌─────────────────────────────────────┐
+│  Protected REST Endpoints           │ ← Application logic
+└─────────────────────────────────────┘

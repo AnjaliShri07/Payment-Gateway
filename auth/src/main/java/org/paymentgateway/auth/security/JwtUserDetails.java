@@ -1,7 +1,7 @@
 package org.paymentgateway.auth.security;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.paymentgateway.auth.entity.User;
+import org.paymentgateway.auth.entity.JwtUser;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class CustomUserDetails implements UserDetails {
+public class JwtUserDetails implements UserDetails {
 
     private final Long id;
     private final String username;
@@ -27,7 +27,7 @@ public class CustomUserDetails implements UserDetails {
     private final boolean credentialsNonExpired;
     private final boolean accountNonLocked;
 
-    public CustomUserDetails(
+    public JwtUserDetails(
         Long id,
         String username,
         String email,
@@ -49,7 +49,7 @@ public class CustomUserDetails implements UserDetails {
         this.accountNonLocked = accountNonLocked;
     }
 
-    public static CustomUserDetails build(User user) {
+    public static JwtUserDetails build(JwtUser user) {
         if (user == null) {
             throw new IllegalArgumentException("User entity cannot be null");
         }
@@ -62,7 +62,7 @@ public class CustomUserDetails implements UserDetails {
                 .collect(Collectors.toList())
             : Collections.emptyList();
 
-        return new CustomUserDetails(
+        return new JwtUserDetails(
             user.getId(),
             Objects.requireNonNullElse(user.getUsername(), ""),
             Objects.requireNonNullElse(user.getEmail(), ""),
@@ -122,7 +122,7 @@ public class CustomUserDetails implements UserDetails {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CustomUserDetails that = (CustomUserDetails) o;
+        JwtUserDetails that = (JwtUserDetails) o;
         return Objects.equals(id, that.id);
     }
 

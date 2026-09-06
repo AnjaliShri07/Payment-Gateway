@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8081
 
 spring:
   application:
@@ -36,13 +36,15 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method # Sort by HTTP method
     tags-sorter: alpha  # Sort tags alphabetically
+    display-request-duration: true
+    try-it-out-enabled: true
 
 # Actuator endpoints
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,circuitbreakerevents
+        include: health,info,metrics,env,circuitbreakerevents
   health:
     show-details: always
 
@@ -57,3 +59,7 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
+
+app:
+  services:
+    auth-service-url: http://localhost:8082

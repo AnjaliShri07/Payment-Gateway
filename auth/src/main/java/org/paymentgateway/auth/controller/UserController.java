@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.paymentgateway.auth.dto.response.ApiResponse;
 import org.paymentgateway.auth.dto.response.UserProfileResponse;
 import org.paymentgateway.auth.exception.UnauthorizedException;
-import org.paymentgateway.auth.security.CustomUserDetails;
+import org.paymentgateway.auth.security.JwtUserDetails;
 import org.paymentgateway.auth.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -37,7 +37,7 @@ public class UserController {
         security = @SecurityRequirement(name = "bearerAuth")
     )
     public ResponseEntity<ApiResponse<UserProfileResponse>> getCurrentUser(
-        @AuthenticationPrincipal CustomUserDetails userDetails
+        @AuthenticationPrincipal JwtUserDetails userDetails
     ) {
         if (userDetails == null) {
             throw new UnauthorizedException("User is not authenticated");

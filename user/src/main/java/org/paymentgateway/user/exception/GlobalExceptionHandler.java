@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Central exception handler for converting application and validation failures
+ * into consistent REST API responses.
+ */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

@@ -1,7 +1,7 @@
 package org.paymentgateway.auth.service;
 
 import org.paymentgateway.auth.dto.response.UserProfileResponse;
-import org.paymentgateway.auth.entity.User;
+import org.paymentgateway.auth.entity.JwtUser;
 import org.paymentgateway.auth.exception.BadRequestException;
 import org.paymentgateway.auth.exception.UserNotFoundException;
 import org.paymentgateway.auth.repository.UserRepository;
@@ -29,7 +29,7 @@ public class UserService {
             throw new BadRequestException("User ID cannot be null");
         }
 
-        User user = userRepository.findById(userId)
+        JwtUser user = userRepository.findById(userId)
             .orElseThrow(() -> UserNotFoundException.withId(userId));
         return mapToUserProfileResponse(user);
     }
@@ -40,7 +40,7 @@ public class UserService {
             throw new BadRequestException("Username cannot be blank");
         }
 
-        User user = userRepository.findByUsername(username.trim())
+        JwtUser user = userRepository.findByUsername(username.trim())
             .orElseThrow(() -> UserNotFoundException.withIdentifier(username));
         return mapToUserProfileResponse(user);
     }
@@ -53,7 +53,7 @@ public class UserService {
             .collect(Collectors.toList());
     }
 
-    private UserProfileResponse mapToUserProfileResponse(User user) {
+    private UserProfileResponse mapToUserProfileResponse(JwtUser user) {
         if (user == null) {
             return null;
         }
@@ -75,5 +75,9 @@ public class UserService {
             user.getCreatedAt(),
             user.getUpdatedAt()
         );
+    }
+
+    public JwtUser loadUserByUsername(String username) {
+        return null;
     }
 }

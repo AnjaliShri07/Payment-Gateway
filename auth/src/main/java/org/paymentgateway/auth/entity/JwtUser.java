@@ -1,28 +1,25 @@
-package org.paymentgateway.user.entity;
+package org.paymentgateway.auth.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Entity representing a user account in the payment gateway.
- * Stores authentication, authorization, and profile information for each registered user.
- */
 @EqualsAndHashCode(callSuper = true)
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "users", 
        uniqueConstraints = {
            @UniqueConstraint(columnNames = "username"),
            @UniqueConstraint(columnNames = "email")
        })
-public class User extends BaseEntity {
+public class JwtUser extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -61,6 +58,12 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     private boolean accountNonLocked = true;
+
+    public JwtUser(String username, String email, String password) {
+        this.username = username;
+        this.email = email;
+        this.password = password;
+    }
 
 
 }

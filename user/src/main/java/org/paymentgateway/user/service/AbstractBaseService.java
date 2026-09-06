@@ -4,6 +4,12 @@ import org.paymentgateway.user.repository.BaseRepository;
 
 import java.util.List;
 
+/**
+ * Shared base implementation for service classes that expose default CRUD operations.
+ *
+ * @param <T> the entity type managed by the service
+ * @param <ID> the identifier type for the entity
+ */
 public abstract class AbstractBaseService<T, ID> implements BaseService<T, ID> {
 
     protected final BaseRepository<T, ID> baseRepository;

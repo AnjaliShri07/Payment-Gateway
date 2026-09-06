@@ -9,11 +9,11 @@ import org.paymentgateway.auth.dto.response.AuthResponse;
 import org.paymentgateway.auth.dto.response.TokenRefreshResponse;
 import org.paymentgateway.auth.entity.RefreshToken;
 import org.paymentgateway.auth.entity.Role;
-import org.paymentgateway.auth.entity.User;
+import org.paymentgateway.auth.entity.JwtUser;
 import org.paymentgateway.auth.exception.*;
 import org.paymentgateway.auth.repository.RoleRepository;
 import org.paymentgateway.auth.repository.UserRepository;
-import org.paymentgateway.auth.security.CustomUserDetails;
+import org.paymentgateway.auth.security.JwtUserDetails;
 import org.paymentgateway.auth.security.jwt.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-public class AuthService {
+public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
@@ -41,7 +41,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
 
-    public AuthService(
+    public AuthenticationService(
         AuthenticationManager authenticationManager,
         UserRepository userRepository,
         RoleRepository roleRepository,
@@ -71,7 +71,7 @@ public class AuthService {
             throw new UserAlreadyExistsException("Error: Email '" + registerRequest.email() + "' is already in use!");
         }
 
-        User user = new User(
+        JwtUser user = new JwtUser(
             registerRequest.username().trim(),
             registerRequest.email().trim().toLowerCase(),
             passwordEncoder.encode(registerRequest.password())
@@ -133,7 +133,7 @@ public class AuthService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        JwtUserDetails userDetails = (JwtUserDetails) authentication.getPrincipal();
 
         String jwt = jwtTokenProvider.generateToken(authentication);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
@@ -168,11 +168,11 @@ public class AuthService {
             .map(refreshTokenService::verifyExpiration)
             .map(refreshTokenService::rotateRefreshToken)
             .map(token -> {
-                User user = token.getUser();
+                JwtUser user = token.getUser();
                 if (user == null) {
                     throw new UserNotFoundException("User associated with refresh token no longer exists");
                 }
-                CustomUserDetails userDetails = CustomUserDetails.build(user);
+                JwtUserDetails userDetails = JwtUserDetails.build(user);
                 String newAccessToken = jwtTokenProvider.generateTokenFromUserDetails(userDetails);
 
                 return TokenRefreshResponse.of(
@@ -191,4 +191,36 @@ public class AuthService {
         }
         SecurityContextHolder.clearContext();
     }
+
+   /* *//**
+     * Refresh Access Token - Generates new access token from refresh token
+     *//*
+    public TokenRefreshResponse refreshAccessToken(String refreshToken) {
+        if (!jwtTokenProvider.validateJwtToken(refreshToken)) {
+            throw new TokenInvalidException("Invalid or expired refresh token");
+        }
+
+        String username = jwtTokenProvider.getUsernameFromJwtToken(refreshToken);
+        Long userId = jwtTokenProvider.getUserIdFromJwtToken(refreshToken);
+        List<String> roles = jwtTokenProvider.getRolesFromJwtToken(refreshToken);
+
+        String newAccessToken = jwtTokenProvider.generateTokenFromUserDetails(username, userId, roles);
+
+        long expirationTime = jwtTokenProvider.getExpirationTimeRemaining(newAccessToken);
+
+        log.info("Access token refreshed for username: {}", username);
+
+        return TokenRefreshResponse.builder()
+                .accessToken(newAccessToken)
+                .tokenType("Bearer")
+                .expiresIn(expirationTime)
+                .build();
+    }*/
+
+    /*@Transactional
+    public void generateAccessToken(String logoutRequest) {
+        jwtTokenProvider.generateToken();
+    }*/
+
+
 }

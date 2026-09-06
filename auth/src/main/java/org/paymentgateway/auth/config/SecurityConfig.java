@@ -1,8 +1,8 @@
 package org.paymentgateway.auth.config;
 
-import org.paymentgateway.auth.security.CustomAccessDeniedHandler;
-import org.paymentgateway.auth.security.CustomUserDetailsService;
-import org.paymentgateway.auth.security.jwt.JwtAuthEntryPoint;
+import org.paymentgateway.auth.security.JwtAccessDeniedHandler;
+import org.paymentgateway.auth.security.JwtUserDetailsService;
+import org.paymentgateway.auth.security.jwt.JwtAuthenticationEntryPoint;
 import org.paymentgateway.auth.security.jwt.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -31,9 +31,9 @@ import java.util.Arrays;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final JwtAuthEntryPoint unauthorizedHandler;
-    private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final JwtUserDetailsService userDetailsService;
+    private final JwtAuthenticationEntryPoint unauthorizedHandler;
+    private final JwtAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Value("${app.cors.allowed-origins:*}")
@@ -49,9 +49,9 @@ public class SecurityConfig {
     private String exposedHeaders;
 
     public SecurityConfig(
-        CustomUserDetailsService userDetailsService,
-        JwtAuthEntryPoint unauthorizedHandler,
-        CustomAccessDeniedHandler accessDeniedHandler,
+        JwtUserDetailsService userDetailsService,
+        JwtAuthenticationEntryPoint unauthorizedHandler,
+        JwtAccessDeniedHandler accessDeniedHandler,
         JwtAuthenticationFilter jwtAuthenticationFilter
     ) {
         this.userDetailsService = userDetailsService;
@@ -116,8 +116,6 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/users/public").permitAll()
                 // Swagger / OpenAPI documentation
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                // H2 Console
-                .requestMatchers("/h2-console/**").permitAll()
                 // Role-based restrictions
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 // All other endpoints require authentication

@@ -1,5 +1,10 @@
 package org.paymentgateway.user.DTO;
 
+/**
+ * Generic response wrapper used by REST endpoints to standardize success and error payloads.
+ *
+ * @param <T> the type of payload carried in the response data field
+ */
 public class BaseResponse<T> {
     private String status;   // SUCCESS, ERROR
     private String message;  // human-readable message

@@ -1,6 +1,6 @@
 package org.paymentgateway.auth.security;
 
-import org.paymentgateway.auth.entity.User;
+import org.paymentgateway.auth.entity.JwtUser;
 import org.paymentgateway.auth.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,11 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
-public class CustomUserDetailsService implements UserDetailsService {
+public class JwtUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public JwtUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -27,9 +27,9 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         String searchKey = usernameOrEmail.trim();
 
-        User user = userRepository.findByUsernameOrEmail(searchKey, searchKey)
+        JwtUser user = userRepository.findByUsernameOrEmail(searchKey, searchKey)
             .orElseThrow(() -> new UsernameNotFoundException("User not found with username or email: " + searchKey));
 
-        return CustomUserDetails.build(user);
+        return JwtUserDetails.build(user);
     }
 }

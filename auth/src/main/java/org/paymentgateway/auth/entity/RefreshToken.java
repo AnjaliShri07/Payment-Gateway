@@ -14,7 +14,7 @@ public class RefreshToken extends BaseEntity {
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
-    private User user;
+    private JwtUser user;
 
     @Column(nullable = false, unique = true, length = 128)
     private String token;
@@ -36,11 +36,11 @@ public class RefreshToken extends BaseEntity {
         this.id = id;
     }
 
-    public User getUser() {
+    public JwtUser getUser() {
         return user;
     }
 
-    public void setUser(User user) {
+    public void setUser(JwtUser user) {
         this.user = user;
     }
 

@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8082
 
 spring:
   application:
@@ -36,7 +36,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,circuitbreakerevents
+        include: health,info,metrics,env,circuitbreakerevents
   health:
     show-details: always
 
@@ -75,5 +75,7 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
 
 

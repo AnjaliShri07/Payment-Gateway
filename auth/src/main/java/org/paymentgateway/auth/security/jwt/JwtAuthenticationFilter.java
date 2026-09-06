@@ -5,7 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.paymentgateway.auth.constants.SecurityConstants;
-import org.paymentgateway.auth.security.CustomUserDetailsService;
+import org.paymentgateway.auth.security.JwtUserDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
@@ -25,11 +25,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
+    private final JwtUserDetailsService userDetailsService;
 
     public JwtAuthenticationFilter(
         JwtTokenProvider jwtTokenProvider,
-        CustomUserDetailsService userDetailsService
+        JwtUserDetailsService userDetailsService
     ) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.userDetailsService = userDetailsService;
