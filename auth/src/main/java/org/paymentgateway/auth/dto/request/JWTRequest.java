@@ -1,5 +1,10 @@
 package org.paymentgateway.auth.dto.request;
 
+/**
+
+ * Request payload for authentication service operations.
+
+ */
 public class JWTRequest {
     private String username;
     private String password;

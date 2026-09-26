@@ -7,6 +7,9 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "roles")
+/**
+ * Authentication service class Role.
+ */
 public class Role {
 
     @Id

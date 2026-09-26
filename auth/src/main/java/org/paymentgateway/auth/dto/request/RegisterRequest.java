@@ -7,6 +7,11 @@ import org.paymentgateway.auth.validation.annotation.ValidUsername;
 
 import java.util.Set;
 
+/**
+
+ * Request payload for authentication service operations.
+
+ */
 public record RegisterRequest(
     @NotBlank(message = "Username cannot be blank")
     @ValidUsername

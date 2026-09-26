@@ -2,6 +2,11 @@ package org.paymentgateway.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
+/**
+
+ * Request payload for authentication service operations.
+
+ */
 public record ClientTokenRequest(
     @NotBlank(message = "clientId is required")
     String clientId,

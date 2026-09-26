@@ -29,6 +29,9 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
+/**
+ * Spring Security configuration for the authentication service.
+ */
 public class SecurityConfig {
 
     private final JwtUserDetailsService userDetailsService;

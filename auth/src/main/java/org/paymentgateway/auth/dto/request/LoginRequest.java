@@ -2,6 +2,11 @@ package org.paymentgateway.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
+/**
+
+ * Request payload for authentication service operations.
+
+ */
 public record LoginRequest(
     @NotBlank(message = "Username or email is required")
     String usernameOrEmail,

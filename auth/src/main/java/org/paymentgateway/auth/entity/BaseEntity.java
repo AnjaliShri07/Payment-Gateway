@@ -11,6 +11,9 @@ import java.time.Instant;
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+/**
+ * Base entity containing audit timestamps for persisted authentication records.
+ */
 public abstract class BaseEntity {
 
     @CreatedDate

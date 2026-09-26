@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 @Service
+/**
+ * Service component for authentication domain operations.
+ */
 public class FieldValidationService {
 
     private final Validator validator;

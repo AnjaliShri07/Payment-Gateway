@@ -14,6 +14,9 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = StrongPasswordValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * Validation annotation for enforcing strong passwords.
+ */
 public @interface StrongPassword {
 
     String message() default "Password must be 8-40 characters long and contain at least one uppercase letter, one lowercase letter, one digit, one special character, and no whitespace";

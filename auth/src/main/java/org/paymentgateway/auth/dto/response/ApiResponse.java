@@ -2,6 +2,11 @@ package org.paymentgateway.auth.dto.response;
 
 import java.time.Instant;
 
+/**
+
+ * Response payload returned by authentication service operations.
+
+ */
 public record ApiResponse<T>(
     boolean success,
     String message,

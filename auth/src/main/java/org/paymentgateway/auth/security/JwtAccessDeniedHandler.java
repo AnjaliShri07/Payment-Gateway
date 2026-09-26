@@ -16,6 +16,9 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
+/**
+ * JWT security component for the authentication service.
+ */
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAccessDeniedHandler.class);

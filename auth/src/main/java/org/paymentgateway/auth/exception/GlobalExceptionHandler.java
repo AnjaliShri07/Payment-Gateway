@@ -21,6 +21,9 @@ import java.util.Map;
 import java.util.Objects;
 
 @RestControllerAdvice
+/**
+ * Authentication service class GlobalExceptionHandler.
+ */
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);

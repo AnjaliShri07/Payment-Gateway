@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+
+ * JWT security component for the authentication service.
+
+ */
 public class JwtUserDetails implements UserDetails {
 
     private final Long id;

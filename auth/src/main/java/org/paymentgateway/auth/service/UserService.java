@@ -15,6 +15,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+/**
+ * Service component for authentication domain operations.
+ */
 public class UserService {
 
     private final UserRepository userRepository;

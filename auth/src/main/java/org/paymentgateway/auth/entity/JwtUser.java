@@ -19,6 +19,9 @@ import java.util.Set;
            @UniqueConstraint(columnNames = "username"),
            @UniqueConstraint(columnNames = "email")
        })
+/**
+ * JWT security component for the authentication service.
+ */
 public class JwtUser extends BaseEntity {
 
     @Id

@@ -5,6 +5,11 @@ import org.springframework.util.StringUtils;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+
+ * Utility methods for validating authentication input.
+
+ */
 public final class ValidationUtils {
 
     private ValidationUtils() {

@@ -18,6 +18,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+/**
+ * Service component for authentication domain operations.
+ */
 public class RefreshTokenService {
 
     private final long refreshTokenDurationMs;

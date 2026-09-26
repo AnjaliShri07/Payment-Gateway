@@ -6,6 +6,9 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "refresh_tokens")
+/**
+ * Authentication service class RefreshToken.
+ */
 public class RefreshToken extends BaseEntity {
 
     @Id

@@ -14,6 +14,9 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = ValidEmailValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * Validation annotation for validating email addresses.
+ */
 public @interface ValidEmail {
 
     String message() default "Invalid email format. Please provide a valid email address";

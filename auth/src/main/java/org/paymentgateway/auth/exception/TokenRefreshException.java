@@ -4,6 +4,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(HttpStatus.FORBIDDEN)
+/**
+ * Exception raised for authentication domain errors.
+ */
 public class TokenRefreshException extends RuntimeException {
 
     private final String token;

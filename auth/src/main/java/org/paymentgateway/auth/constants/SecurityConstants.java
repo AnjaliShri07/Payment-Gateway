@@ -1,5 +1,10 @@
 package org.paymentgateway.auth.constants;
 
+/**
+
+ * Constants used by the authentication service.
+
+ */
 public final class SecurityConstants {
 
     private SecurityConstants() {

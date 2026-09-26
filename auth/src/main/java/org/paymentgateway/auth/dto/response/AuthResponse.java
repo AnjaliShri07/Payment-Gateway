@@ -2,6 +2,11 @@ package org.paymentgateway.auth.dto.response;
 
 import java.util.List;
 
+/**
+
+ * Response payload returned by authentication service operations.
+
+ */
 public record AuthResponse(
     String accessToken,
     String refreshToken,

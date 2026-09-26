@@ -28,6 +28,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
+/**
+ * JWT security component for the authentication service.
+ */
 public class JwtTokenProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);

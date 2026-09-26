@@ -11,6 +11,9 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(name = "client_applications", uniqueConstraints = {@UniqueConstraint(columnNames = "client_id")})
+/**
+ * Authentication service class ClientApplication.
+ */
 public class ClientApplication {
 
     @Id

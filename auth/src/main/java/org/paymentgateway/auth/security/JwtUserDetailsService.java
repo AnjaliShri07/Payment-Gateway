@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
+/**
+ * Service component for authentication domain operations.
+ */
 public class JwtUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;

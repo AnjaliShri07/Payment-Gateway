@@ -1,5 +1,10 @@
 package org.paymentgateway.auth.dto.response;
 
+/**
+
+ * Response payload returned by authentication service operations.
+
+ */
 public record TokenRefreshResponse(
     String accessToken,
     String refreshToken,

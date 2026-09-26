@@ -5,6 +5,11 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.paymentgateway.auth.validation.annotation.ValidUsername;
 import org.paymentgateway.auth.validation.util.ValidationUtils;
 
+/**
+
+ * Bean Validation constraint validator.
+
+ */
 public class ValidUsernameValidator implements ConstraintValidator<ValidUsername, String> {
 
     @Override

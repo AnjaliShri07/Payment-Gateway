@@ -14,6 +14,9 @@ import java.lang.annotation.Target;
 @Constraint(validatedBy = ValidUsernameValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
+/**
+ * Validation annotation for validating usernames.
+ */
 public @interface ValidUsername {
 
     String message() default "Username must be 3-50 characters, contain only letters, digits, underscores, or hyphens, and cannot be a reserved name";

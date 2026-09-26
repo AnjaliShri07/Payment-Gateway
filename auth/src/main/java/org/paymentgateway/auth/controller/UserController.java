@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "Users", description = "Endpoints for user profile and information")
+/**
+ * REST controller for authentication service operations.
+ */
 public class UserController {
 
     private final UserService userService;

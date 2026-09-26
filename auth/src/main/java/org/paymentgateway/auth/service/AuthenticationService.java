@@ -32,6 +32,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+/**
+ * Service component for authentication domain operations.
+ */
 public class AuthenticationService {
 
     private final AuthenticationManager authenticationManager;

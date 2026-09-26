@@ -5,6 +5,11 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.paymentgateway.auth.validation.annotation.StrongPassword;
 import org.paymentgateway.auth.validation.util.ValidationUtils;
 
+/**
+
+ * Bean Validation constraint validator.
+
+ */
 public class StrongPasswordValidator implements ConstraintValidator<StrongPassword, String> {
 
     @Override

@@ -7,6 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
+/**
+ * Repository interface for authentication domain persistence.
+ */
 public interface ClientApplicationRepository extends JpaRepository<ClientApplication, Long> {
     Optional<ClientApplication> findByClientId(String clientId);
 }

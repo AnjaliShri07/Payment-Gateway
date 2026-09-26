@@ -20,6 +20,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+/**
+ * Service component for authentication domain operations.
+ */
 public class ClientApplicationService {
 
     private final ClientApplicationRepository clientRepo;
