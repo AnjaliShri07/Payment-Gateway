@@ -1,7 +1,7 @@
 package org.paymentgateway.user.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.paymentgateway.user.DTO.UserUpdateRequest;
+import org.paymentgateway.user.dto.UserUpdateRequest;
 import org.paymentgateway.user.entity.User;
 import org.paymentgateway.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -32,9 +32,6 @@ public class UserServiceImpl extends AbstractBaseService<User, Long> {
             if (user.getEmail() != null) {
                 existing.setEmail(user.getEmail());
             }
-            if (user.getPassword() != null) {
-                existing.setPassword(user.getPassword());
-            }
             if (user.getRoles() != null && !user.getRoles().isEmpty()) {
                 existing.setRoles(user.getRoles());
             }
@@ -49,9 +46,6 @@ public class UserServiceImpl extends AbstractBaseService<User, Long> {
             }
             if (request.getEmail() != null) {
                 existing.setEmail(request.getEmail());
-            }
-            if (request.getPassword() != null) {
-                existing.setPassword(request.getPassword());
             }
             if (request.getRoles() != null) {
                 existing.setRoles(request.getRoles());

@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.paymentgateway.user.DTO.UserUpdateRequest;
+import org.paymentgateway.user.dto.UserUpdateRequest;
 import org.paymentgateway.user.entity.User;
 import org.paymentgateway.user.repository.UserRepository;
 
@@ -92,6 +92,7 @@ class UserServiceImplTest {
     @Test
     void updateRequestChangesBooleanFieldsAndRoles() {
         User existing = new User();
+        existing.setPassword("stored-password");
         UserUpdateRequest request = new UserUpdateRequest();
         request.setEnabled(false);
         request.setAccountNonExpired(false);
@@ -107,6 +108,7 @@ class UserServiceImplTest {
         assertThat(existing.isAccountNonExpired()).isFalse();
         assertThat(existing.isCredentialsNonExpired()).isFalse();
         assertThat(existing.isAccountNonLocked()).isFalse();
+        assertThat(existing.getPassword()).isEqualTo("stored-password");
         verify(userRepository).save(existing);
     }
 

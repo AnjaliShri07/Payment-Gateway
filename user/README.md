@@ -93,9 +93,10 @@ user/
 | `UserRepository` | Provides Spring Data JPA persistence operations for `User`. |
 | `User` | JPA aggregate containing profile, account-status, and role-assignment data. |
 | `Role` | JPA entity representing an assignable user role. |
-| `UserUpdateRequest` | Nullable command object for partial user updates; it is intentionally separate from the persistence entity. |
+| `UserUpdateRequest` | Nullable command object for partial user updates; it is intentionally separate from the persistence entity and does not accept password changes. |
 | `AuthenticationServiceClient` | Calls the Auth microservice to validate bearer tokens and retrieve the authenticated profile. |
 | `TokenAuthenticationFilter` | Intercepts bearer tokens, obtains the external profile, and populates Spring Security's `SecurityContext`. |
+| `ResourceNotFoundException` | Signals missing domain records (such as a user or role lookup result) so controllers can return a clean 404 response. |
 | `GlobalExceptionHandler` | Converts validation, not-found, and unexpected exceptions into the common response format. |
 | `OpenApiConfig` | Registers `RestTemplate` and OpenAPI/Swagger metadata. |
 
@@ -134,12 +135,12 @@ Content-Type: application/json
 }
 ```
 
-Only `email` is changed. Omitted fields remain unchanged.
+Only `email` is changed. Omitted fields remain unchanged. Password changes are handled by the Auth Service at `POST /api/v1/auth/change-password` and require the current password.
 
 ## 5. Request flow
 
 1. `TokenAuthenticationFilter` reads the bearer token.
-2. `AuthenticationServiceClient` calls `GET http://localhost:8082/api/v1/users/me`.
+2. `AuthenticationServiceClient` calls `GET http://localhost:8082/api/v1/users/me` by default (configured in `application.yml`).
 3. A valid profile is converted into a Spring Security authentication.
 4. `UserController` validates the request and delegates to `UserServiceImpl`.
 5. `UserServiceImpl` reads or changes the aggregate through `UserRepository`.
@@ -176,8 +177,9 @@ Important settings are in `src/main/resources/application.yml`:
 | OpenAPI JSON | `/v3/api-docs/user` |
 | Swagger UI | `/swagger-ui.html` |
 | Schema mode | `validate` |
+| Allowed browser origins | `http://localhost:4200,http://127.0.0.1:4200` |
 
-Database credentials and service URLs should be supplied through environment-specific configuration or environment variables rather than committed defaults.
+The current local configuration uses the MySQL username/password `root`/`root`. Supply secure, environment-specific credentials and service URLs before deploying.
 
 ## 9. Testing strategy
 

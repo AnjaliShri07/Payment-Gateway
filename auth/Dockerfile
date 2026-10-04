@@ -1,14 +1,17 @@
 # Build stage
-FROM maven:3.9.11-eclipse-temurin-26 AS build
+FROM eclipse-temurin:26-jdk AS build
 
 WORKDIR /build
 
-# Copy the build descriptor first so Jenkins/Docker can reuse the dependency layer.
-COPY pom.xml .
-RUN mvn -B -ntp dependency:go-offline
+# Copy dependency metadata first to maximize Docker cache reuse.
+COPY mvnw ./
+COPY .mvn ./.mvn
+COPY pom.xml ./
+RUN chmod +x ./mvnw && ./mvnw -B -ntp dependency:go-offline
 
+# Copy application source and compile the jar.
 COPY src ./src
-RUN mvn -B -ntp clean package -DskipTests
+RUN ./mvnw -B -ntp clean package -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:26-jre
@@ -24,7 +27,7 @@ USER 10001:10001
 
 EXPOSE 8082
 
-# Spring Boot honors JAVA_TOOL_OPTIONS, allowing Kubernetes resource-aware JVM tuning.
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=25.0 -Djava.security.egd=file:/dev/./urandom"
+ENV SERVER_PORT=8082
+ENV JAVA_TOOL_OPTIONS="-Djava.security.egd=file:/dev/./urandom"
 
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

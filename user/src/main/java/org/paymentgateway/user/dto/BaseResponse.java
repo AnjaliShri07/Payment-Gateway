@@ -1,4 +1,4 @@
-package org.paymentgateway.user.DTO;
+package org.paymentgateway.user.dto;
 
 /**
  * Generic response wrapper used by REST endpoints to standardize success and error payloads.

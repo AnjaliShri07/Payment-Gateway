@@ -1,4 +1,4 @@
-package org.paymentgateway.user.DTO;
+package org.paymentgateway.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
@@ -22,9 +22,6 @@ public class UserUpdateRequest {
     @Size(max = 100)
     @Email
     private String email;
-
-    @Size(max = 120)
-    private String password;
 
     private Set<Role> roles;
     private Boolean enabled;

@@ -13,12 +13,7 @@ This plan details the end-to-end architecture and implementation of an enterpris
 
 ---
 
-## User Review Required
-
-> [!IMPORTANT]
-> - **Java Version**: We will configure `pom.xml` with modern Java 21+ / 26 compiler support, using standard Java records and modern syntax.
-> - **Default Database**: Pre-configured with H2 in-memory database with console enabled for zero-friction setup, ready for drop-in PostgreSQL/MySQL production configuration.
-> - **Default Seed Accounts**: Includes automatic database seeding for `admin` (`Admin@123456`) and `user` (`User@123456`) to facilitate immediate verification.
+The service currently uses MySQL (`payment_gateway`) and Hibernate schema mode `update`; see `src/main/resources/application.yml` for connection settings. Do not rely on the development database credentials or automatic schema updates for production.
 
 ---
 
@@ -81,6 +76,7 @@ auth/
 │   │   │   ├── exception/
 │   │   │   │   ├── GlobalExceptionHandler.java
 │   │   │   │   ├── BadRequestException.java
+│   │   │   │   ├── ResourceNotFoundException.java
 │   │   │   │   ├── UserNotFoundException.java
 │   │   │   │   ├── UserAlreadyExistsException.java
 │   │   │   │   ├── TokenExpiredException.java
@@ -115,8 +111,8 @@ auth/
 - MySQL database added.
 - Java compiler settings targeting modern Java baseline.
 
-#### [NEW] [application.yml](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/resources/application.yml)
-- Server port (`8082`), context path, JPA/H2 config.
+#### [NEW] `application.yml`
+- Server port (`8082`), MySQL datasource (`payment_gateway`), and JPA configuration.
 - `app.jwt.secret`, `app.jwt.expiration-ms` (e.g. 900,000 = 15m), `app.jwt.refresh-expiration-ms` (e.g. 604,800,000 = 7 days).
 
 ---
@@ -169,10 +165,10 @@ auth/
 
 ### 4. Service & Controller Layer
 
-#### [NEW] DTO Records
-- Modern Java records for immutable request/response payloads:
-    - `RegisterRequest(username, email, password, roles)` with Jakarta Validation annotations.
+DTO records include:
+    - `RegisterRequest(username, email, password, requestAdminAccess, adminAccessReason, roles)` with Jakarta Validation annotations. Registration always assigns `ROLE_USER`; the client-supplied `roles` field does not grant privileges.
     - `LoginRequest(usernameOrEmail, password)`
+    - `ChangePasswordRequest(currentPassword, newPassword)`
     - `TokenRefreshRequest(refreshToken)`
     - `AuthResponse(accessToken, refreshToken, tokenType, expiresIn, id, username, email, roles)`
     - `TokenRefreshResponse(accessToken, refreshToken, tokenType)`
@@ -183,15 +179,13 @@ auth/
 - Business logic for user registration, login credential validation, refresh token rotation, and secure revocation.
 
 #### [NEW] Controllers
-- [AuthenticationController.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/controller/AuthenticationController.java): `/api/v1/auth/register`, `/api/v1/auth/login`, `/api/v1/auth/refresh-token`, `/api/v1/auth/logout`.
+- `AuthenticationController`: `/api/v1/auth/register`, `/api/v1/auth/login`, authenticated `/api/v1/auth/change-password`, `/api/v1/auth/refresh-token`, `/api/v1/auth/logout`, and machine-client registration/token routes.
 - [UserController.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/controller/UserController.java): `/api/v1/users/me`, `/api/v1/users/public`.
-- [AdminController.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/controller/AdminController.java): `/api/v1/admin/dashboard`, `/api/v1/admin/users`.
+- `UserController` also supports authenticated administrator-access request submission and status lookup.
+- `AdminController`: `/api/v1/admin/dashboard`, `/api/v1/admin/users`, and administrator-access request review endpoints.
 
 #### [NEW] [GlobalExceptionHandler.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/exception/GlobalExceptionHandler.java)
-- Standardized REST error responses for validation failures, bad credentials, expired/revoked refresh tokens, resource conflicts, and access denials.
-
-#### [NEW] [DataInitializer.java](file:///d:/Antigravity%20IDE/workspaces/test/security/src/main/java/com/example/security/bootstrap/DataInitializer.java)
-- Automatically bootstraps roles and default admin & user accounts on startup.
+- Standardized REST error responses for validation failures, bad credentials, expired/revoked refresh tokens, missing resources (`ResourceNotFoundException`), resource conflicts, and access denials.
 
 ---
 
@@ -200,7 +194,8 @@ auth/
 ### Automated / Manual Verification
 1. **Source Inspection & Code Integrity**: Verify complete project tree, all imports, annotations, and clean record syntax.
 2. **Endpoint Flow Verification**:
-    - `POST /api/v1/auth/register` -> verify successful account creation.
+    - `POST /api/v1/auth/register` -> verify `ROLE_USER` account creation, including optional administrator-access request.
+    - `POST /api/v1/auth/change-password` with a bearer token -> verify password change and refresh-token invalidation.
     - `POST /api/v1/auth/login` -> verify receipt of JWT Access Token and Refresh Token.
     - `GET /api/v1/users/me` with `Bearer <accessToken>` -> verify 200 OK and user profile data.
     - `GET /api/v1/admin/dashboard` with regular user token -> verify 403 Forbidden.
@@ -229,3 +224,28 @@ auth/
 ┌─────────────────────────────────────┐
 │  Protected REST Endpoints           │ ← Application logic
 └─────────────────────────────────────┘
+
+## Administrator access requests
+
+Public registration always creates a `ROLE_USER` account. To request administrator access during registration, set `requestAdminAccess` to `true` and provide an `adminAccessReason`. A submitted `roles` value is ignored for authorization; users cannot self-assign administrator privileges.
+
+The service uses Hibernate `ddl-auto: update`, which creates the `admin_access_requests` table if it is missing. No separate SQL script is required for local startup. For production deployments, use a controlled database migration instead of relying on automatic schema updates.
+
+- `POST /api/v1/auth/register` accepts `username`, `email`, `password`, and optionally `requestAdminAccess` plus `adminAccessReason`. Example:
+
+  ```json
+  {
+    "username": "newuser",
+    "email": "newuser@example.com",
+    "password": "StrongPassword1!",
+    "requestAdminAccess": true,
+    "adminAccessReason": "I need to manage user access."
+  }
+  ```
+
+- Signed-in users can submit a request with `POST /api/v1/users/me/admin-access-requests` and check its latest status with `GET /api/v1/users/me/admin-access-request`.
+- Administrators can review the pending queue with `GET /api/v1/admin/admin-access-requests` and approve or reject with `POST /api/v1/admin/admin-access-requests/{requestId}/decision`, passing `{"status":"APPROVED"}` or `{"status":"REJECTED"}`. An optional `note` can accompany the decision.
+
+Only an approved request adds `ROLE_ADMIN`; the review routes are restricted to administrators. Users can change their password through authenticated `POST /api/v1/auth/change-password`, sending `currentPassword` and `newPassword`; existing refresh tokens are invalidated.
+
+For the service architecture, complete endpoint list, and Postman-ready request examples, see [Auth Architecture and Postman Guide](./AUTH_ARCHITECTURE_AND_POSTMAN_GUIDE.md).
