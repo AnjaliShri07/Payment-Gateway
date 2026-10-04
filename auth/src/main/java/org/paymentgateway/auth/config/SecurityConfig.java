@@ -115,8 +115,10 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
+                .requestMatchers("/api/v1/auth/change-password").authenticated()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/users/public").permitAll()
+                .requestMatchers("/actuator/health/**").permitAll()
                 // Swagger / OpenAPI documentation
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Role-based restrictions

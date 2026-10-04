@@ -1,14 +1,18 @@
 package org.paymentgateway.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.paymentgateway.auth.dto.request.*;
 import org.paymentgateway.auth.dto.response.*;
+import org.paymentgateway.auth.exception.UnauthorizedException;
+import org.paymentgateway.auth.security.JwtUserDetails;
 import org.paymentgateway.auth.service.AuthenticationService;
 import org.paymentgateway.auth.service.ClientApplicationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -30,23 +34,37 @@ public class AuthenticationController {
     @PostMapping("/register")
     @Operation(summary = "Register a new user account")
     public ResponseEntity<ApiResponse<Void>> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
-        authService.register(registerRequest);
+        boolean adminAccessRequested = authService.register(registerRequest);
+        String message = adminAccessRequested
+            ? "User registered successfully. Your administrator access request is pending review."
+            : "User registered successfully!";
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(ApiResponse.success("User registered successfully!"));
+            .body(ApiResponse.success(message));
     }
 
-   /* @PostMapping("/token")
-    public ResponseEntity<String> generateToken(@RequestParam String username) {
-        String token = authService.generateAccessToken(username);
-        return ResponseEntity.ok(token);
-    }*/
 
     @PostMapping("/login")
     @Operation(summary = "Authenticate user and generate Access & Refresh tokens")
     public ResponseEntity<ApiResponse<AuthResponse>> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         AuthResponse authResponse = authService.login(loginRequest);
         return ResponseEntity.ok(ApiResponse.success("Login successful!", authResponse));
+    }
+
+    @PostMapping("/change-password")
+    @Operation(
+        summary = "Change password for the authenticated user",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+        @Valid @RequestBody ChangePasswordRequest request,
+        @AuthenticationPrincipal JwtUserDetails userDetails
+    ) {
+        if (userDetails == null) {
+            throw new UnauthorizedException("Authentication is required to change a password");
+        }
+        authService.changePassword(userDetails.getId(), request.currentPassword(), request.newPassword());
+        return ResponseEntity.ok(ApiResponse.success("Password changed successfully. Please sign in again."));
     }
 
     @PostMapping("/refresh-token")

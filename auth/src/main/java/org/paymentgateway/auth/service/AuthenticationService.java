@@ -16,6 +16,7 @@ import org.paymentgateway.auth.repository.UserRepository;
 import org.paymentgateway.auth.security.JwtUserDetails;
 import org.paymentgateway.auth.security.jwt.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,6 +41,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final AdminAccessRequestService adminAccessRequestService;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
@@ -48,6 +50,7 @@ public class AuthenticationService {
         AuthenticationManager authenticationManager,
         UserRepository userRepository,
         RoleRepository roleRepository,
+        AdminAccessRequestService adminAccessRequestService,
         PasswordEncoder passwordEncoder,
         JwtTokenProvider jwtTokenProvider,
         RefreshTokenService refreshTokenService
@@ -55,13 +58,14 @@ public class AuthenticationService {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.adminAccessRequestService = adminAccessRequestService;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.refreshTokenService = refreshTokenService;
     }
 
     @Transactional
-    public void register(RegisterRequest registerRequest) {
+    public boolean register(RegisterRequest registerRequest) {
         if (registerRequest == null) {
             throw new BadRequestException("Registration request payload cannot be null");
         }
@@ -80,47 +84,36 @@ public class AuthenticationService {
             passwordEncoder.encode(registerRequest.password())
         );
 
-        Set<String> strRoles = registerRequest.roles();
-        Set<Role> roles = new HashSet<>();
+        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+            .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_USER is not found."));
+        user.setRoles(new HashSet<>(Set.of(userRole)));
+        JwtUser savedUser = userRepository.save(user);
 
-        if (strRoles == null || strRoles.isEmpty()) {
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_USER is not found."));
-            roles.add(userRole);
-        } else {
-            for (String roleStr : strRoles) {
-                if (!StringUtils.hasText(roleStr)) {
-                    continue;
-                }
-                String normalizedRole = roleStr.trim().toUpperCase();
-                switch (normalizedRole) {
-                    case "ADMIN", "ROLE_ADMIN" -> {
-                        Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                            .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_ADMIN is not found."));
-                        roles.add(adminRole);
-                    }
-                    case "MOD", "MODERATOR", "ROLE_MODERATOR" -> {
-                        Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
-                            .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_MODERATOR is not found."));
-                        roles.add(modRole);
-                    }
-                    case "USER", "ROLE_USER" -> {
-                        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                            .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_USER is not found."));
-                        roles.add(userRole);
-                    }
-                    default -> throw new InvalidRoleException("Error: Role '" + roleStr + "' is invalid. Allowed roles: USER, MODERATOR, ADMIN");
-                }
-            }
-            if (roles.isEmpty()) {
-                Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                    .orElseThrow(() -> new ResourceNotFoundException("Error: Role ROLE_USER is not found."));
-                roles.add(userRole);
-            }
+        if (registerRequest.requestAdminAccess()) {
+            adminAccessRequestService.createRequest(savedUser, registerRequest.adminAccessReason());
+        }
+        return registerRequest.requestAdminAccess();
+    }
+
+    @Transactional
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+        if (userId == null || !StringUtils.hasText(currentPassword) || !StringUtils.hasText(newPassword)) {
+            throw new BadRequestException("User ID, current password, and new password are required");
         }
 
-        user.setRoles(roles);
+        JwtUser user = userRepository.findById(userId)
+            .orElseThrow(() -> UserNotFoundException.withId(userId));
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new BadRequestException("New password must be different from the current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        refreshTokenService.deleteByUserId(userId);
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
@@ -194,36 +187,5 @@ public class AuthenticationService {
         }
         SecurityContextHolder.clearContext();
     }
-
-   /* *//**
-     * Refresh Access Token - Generates new access token from refresh token
-     *//*
-    public TokenRefreshResponse refreshAccessToken(String refreshToken) {
-        if (!jwtTokenProvider.validateJwtToken(refreshToken)) {
-            throw new TokenInvalidException("Invalid or expired refresh token");
-        }
-
-        String username = jwtTokenProvider.getUsernameFromJwtToken(refreshToken);
-        Long userId = jwtTokenProvider.getUserIdFromJwtToken(refreshToken);
-        List<String> roles = jwtTokenProvider.getRolesFromJwtToken(refreshToken);
-
-        String newAccessToken = jwtTokenProvider.generateTokenFromUserDetails(username, userId, roles);
-
-        long expirationTime = jwtTokenProvider.getExpirationTimeRemaining(newAccessToken);
-
-        log.info("Access token refreshed for username: {}", username);
-
-        return TokenRefreshResponse.builder()
-                .accessToken(newAccessToken)
-                .tokenType("Bearer")
-                .expiresIn(expirationTime)
-                .build();
-    }*/
-
-    /*@Transactional
-    public void generateAccessToken(String logoutRequest) {
-        jwtTokenProvider.generateToken();
-    }*/
-
 
 }

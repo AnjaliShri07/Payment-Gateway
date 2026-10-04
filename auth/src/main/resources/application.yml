@@ -13,7 +13,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
-      ddl-auto: validate   # create / update / validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -77,5 +77,3 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     try-it-out-enabled: true
-
-

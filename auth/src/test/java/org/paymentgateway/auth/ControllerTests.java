@@ -8,6 +8,7 @@ import org.paymentgateway.auth.dto.response.UserProfileResponse;
 import org.paymentgateway.auth.exception.UnauthorizedException;
 import org.paymentgateway.auth.exception.UserNotFoundException;
 import org.paymentgateway.auth.security.JwtUserDetails;
+import org.paymentgateway.auth.service.AdminAccessRequestService;
 import org.paymentgateway.auth.service.UserService;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,7 +26,7 @@ class ControllerTests {
 
     @Test
     void adminDashboardReturnsSuccessResponse() {
-        AdminController controller = new AdminController(userService);
+        AdminController controller = new AdminController(userService, mock(AdminAccessRequestService.class));
 
         var response = controller.adminDashboard();
 
@@ -42,7 +43,7 @@ class ControllerTests {
         );
         when(userService.getAllUsers()).thenReturn(List.of(profile));
 
-        var response = new AdminController(userService).getAllUsers();
+        var response = new AdminController(userService, mock(AdminAccessRequestService.class)).getAllUsers();
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(List.of(profile), response.getBody().data());
@@ -51,7 +52,7 @@ class ControllerTests {
 
     @Test
     void publicContentDoesNotRequireUser() {
-        var response = new UserController(userService).publicContent();
+        var response = new UserController(userService, mock(AdminAccessRequestService.class)).publicContent();
 
         assertEquals(200, response.getStatusCode().value());
         assertTrue(response.getBody().success());
@@ -61,7 +62,7 @@ class ControllerTests {
     void currentUserRejectsMissingAuthentication() {
         assertThrows(
             UnauthorizedException.class,
-            () -> new UserController(userService).getCurrentUser(null)
+            () -> new UserController(userService, mock(AdminAccessRequestService.class)).getCurrentUser(null)
         );
         verifyNoInteractions(userService);
     }
@@ -77,7 +78,7 @@ class ControllerTests {
         );
         when(userService.getUserProfile(5L)).thenReturn(java.util.Optional.of(profile));
 
-        var response = new UserController(userService).getCurrentUser(details);
+        var response = new UserController(userService, mock(AdminAccessRequestService.class)).getCurrentUser(details);
 
         assertEquals(200, response.getStatusCode().value());
         assertEquals(profile, response.getBody().data());
@@ -93,7 +94,7 @@ class ControllerTests {
 
         assertThrows(
             UserNotFoundException.class,
-            () -> new UserController(userService).getCurrentUser(details)
+            () -> new UserController(userService, mock(AdminAccessRequestService.class)).getCurrentUser(details)
         );
     }
 }

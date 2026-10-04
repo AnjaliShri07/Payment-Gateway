@@ -7,6 +7,7 @@ import org.paymentgateway.auth.validation.annotation.ValidUsername;
 
 import java.util.Set;
 
+
 /**
 
  * Request payload for authentication service operations.
@@ -25,5 +26,13 @@ public record RegisterRequest(
     @StrongPassword
     String password,
 
+    Boolean requestAdminAccess,
+
+    String adminAccessReason,
+
     Set<String> roles
-) {}
+) {
+    public RegisterRequest {
+        requestAdminAccess = Boolean.TRUE.equals(requestAdminAccess);
+    }
+}

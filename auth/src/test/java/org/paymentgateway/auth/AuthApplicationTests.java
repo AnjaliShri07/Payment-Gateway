@@ -14,18 +14,19 @@ import org.paymentgateway.auth.entity.JwtUser;
 import org.paymentgateway.auth.entity.RefreshToken;
 import org.paymentgateway.auth.entity.Role;
 import org.paymentgateway.auth.exception.BadRequestException;
-import org.paymentgateway.auth.exception.InvalidRoleException;
 import org.paymentgateway.auth.exception.UserAlreadyExistsException;
 import org.paymentgateway.auth.repository.RoleRepository;
 import org.paymentgateway.auth.repository.UserRepository;
 import org.paymentgateway.auth.security.JwtUserDetails;
 import org.paymentgateway.auth.security.jwt.JwtTokenProvider;
 import org.paymentgateway.auth.service.AuthenticationService;
+import org.paymentgateway.auth.service.AdminAccessRequestService;
 import org.paymentgateway.auth.service.RefreshTokenService;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,6 +48,8 @@ class AuthApplicationTests {
     @Mock
     private RoleRepository roleRepository;
     @Mock
+    private AdminAccessRequestService adminAccessRequestService;
+    @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
     private JwtTokenProvider jwtTokenProvider;
@@ -61,6 +64,7 @@ class AuthApplicationTests {
             authenticationManager,
             userRepository,
             roleRepository,
+            adminAccessRequestService,
             passwordEncoder,
             jwtTokenProvider,
             refreshTokenService
@@ -79,6 +83,8 @@ class AuthApplicationTests {
             " alice ",
             "ALICE@example.com",
             "Password1!",
+            false,
+            null,
             null
         ));
 
@@ -99,7 +105,7 @@ class AuthApplicationTests {
         assertThrows(
             UserAlreadyExistsException.class,
             () -> authenticationService.register(
-                new RegisterRequest("alice", "alice@example.com", "Password1!", null)
+                new RegisterRequest("alice", "alice@example.com", "Password1!", false, null, null)
             )
         );
 
@@ -107,24 +113,84 @@ class AuthApplicationTests {
     }
 
     @Test
-    void registerRejectsUnknownRole() {
+    void registerAlwaysAssignsUserRoleEvenWhenClientRequestsAdmin() {
         when(userRepository.existsByUsername("alice")).thenReturn(false);
         when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
+        Role userRole = new Role(ERole.ROLE_USER);
+        when(roleRepository.findByName(ERole.ROLE_USER)).thenReturn(Optional.of(userRole));
+        when(passwordEncoder.encode("Password1!")).thenReturn("hashed-password");
+        when(userRepository.save(any())).thenAnswer(invocation -> {
+            JwtUser user = invocation.getArgument(0);
+            user.setId(12L);
+            return user;
+        });
 
-        assertThrows(
-            InvalidRoleException.class,
-            () -> authenticationService.register(
-                new RegisterRequest("alice", "alice@example.com", "Password1!", Set.of("OWNER"))
-            )
+        boolean requestSubmitted = authenticationService.register(
+            new RegisterRequest("alice", "alice@example.com", "Password1!", true, "Manage users", Set.of("ADMIN"))
         );
 
-        verify(userRepository, never()).save(any());
+        ArgumentCaptor<JwtUser> captor = ArgumentCaptor.forClass(JwtUser.class);
+        verify(userRepository).save(captor.capture());
+        assertEquals(Set.of(userRole), captor.getValue().getRoles());
+        assertTrue(requestSubmitted);
+        verify(adminAccessRequestService).createRequest(captor.getValue(), "Manage users");
     }
 
     @Test
     void registerRejectsNullRequest() {
         assertThrows(BadRequestException.class, () -> authenticationService.register(null));
         verifyNoInteractions(userRepository, roleRepository, passwordEncoder);
+    }
+
+    @Test
+    void changePasswordVerifiesAndEncodesNewPasswordAndInvalidatesRefreshToken() {
+        JwtUser user = new JwtUser();
+        user.setId(7L);
+        user.setPassword("old-hash");
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("OldPassword1!", "old-hash")).thenReturn(true);
+        when(passwordEncoder.matches("NewPassword2@", "old-hash")).thenReturn(false);
+        when(passwordEncoder.encode("NewPassword2@")).thenReturn("new-hash");
+
+        authenticationService.changePassword(7L, "OldPassword1!", "NewPassword2@");
+
+        assertEquals("new-hash", user.getPassword());
+        verify(userRepository).save(user);
+        verify(refreshTokenService).deleteByUserId(7L);
+    }
+
+    @Test
+    void changePasswordRejectsIncorrectCurrentPassword() {
+        JwtUser user = new JwtUser();
+        user.setId(7L);
+        user.setPassword("old-hash");
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "old-hash")).thenReturn(false);
+
+        assertThrows(
+            BadCredentialsException.class,
+            () -> authenticationService.changePassword(7L, "wrong", "NewPassword2@")
+        );
+
+        verify(userRepository, never()).save(any());
+        verify(refreshTokenService, never()).deleteByUserId(any());
+    }
+
+    @Test
+    void changePasswordRejectsReusingCurrentPassword() {
+        JwtUser user = new JwtUser();
+        user.setId(7L);
+        user.setPassword("old-hash");
+        when(userRepository.findById(7L)).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("same-password", "old-hash")).thenReturn(true);
+
+        assertThrows(
+            BadRequestException.class,
+            () -> authenticationService.changePassword(7L, "same-password", "same-password")
+        );
+
+        verify(userRepository, never()).save(any());
+        verify(refreshTokenService, never()).deleteByUserId(any());
     }
 
     @Test
