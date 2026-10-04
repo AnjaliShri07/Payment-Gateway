@@ -1,7 +1,0 @@
-org\paymentgateway\user\client\AuthenticationServiceClientTest.class
-org\paymentgateway\user\exception\GlobalExceptionHandlerTest.class
-org\paymentgateway\user\config\SecurityConfigTest$TestableTokenAuthenticationFilter.class
-org\paymentgateway\user\UserApplicationTests.class
-org\paymentgateway\user\service\UserServiceImplTest.class
-org\paymentgateway\user\config\SecurityConfigTest.class
-org\paymentgateway\user\controller\UserControllerTest.class
