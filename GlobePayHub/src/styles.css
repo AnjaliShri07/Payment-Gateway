@@ -1,0 +1,53 @@
+@import './app/app.css';
+
+:root {
+  color-scheme: light;
+  --bg-base: #f3f6fa;
+  --bg-soft: #edf2f8;
+  --text: #1f2937;
+  --text-soft: #718096;
+  --shadow-soft: 0 18px 48px rgba(30, 49, 75, 0.08);
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  background: var(--bg-base);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgb(67 133 245 / 5%), transparent 28%),
+    linear-gradient(180deg, var(--bg-soft) 0%, var(--bg-base) 100%);
+  color: var(--text);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+app-root {
+  display: block;
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: rgb(67 133 245 / 25%);
+}
